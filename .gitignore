@@ -26,3 +26,9 @@ hs_err_pid*
 
 # Gradle Wrapper
 !gradle-wrapper.jar
+
+# Generated files
+generated
+build
+out
+.gradle
