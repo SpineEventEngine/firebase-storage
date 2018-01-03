@@ -48,6 +48,12 @@ buildscript {
     }
 }
 
+ext {
+    credentialsPropertyFile = 'credentials.properties'
+    publishPlugin = "$rootDir/scripts/publish.gradle"
+    projectsToPublish = ['firebase-mirror']
+}
+
 allprojects {
     apply from: "$rootDir/ext.gradle"
     apply plugin: 'java'
@@ -150,3 +156,5 @@ subprojects {
         }
     }
 }
+
+apply from: publishPlugin
