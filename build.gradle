@@ -70,7 +70,7 @@ allprojects {
         mavenLocal()
     }
 
-    group = 'io.spine.server'
+    group = 'io.spine'
     version = spineVersion
 }
 
