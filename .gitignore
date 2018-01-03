@@ -21,9 +21,6 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# IDEA configs
-**.iml
-
 # Gradle Wrapper
 !gradle-wrapper.jar
 
@@ -32,3 +29,10 @@ generated
 build
 out
 .gradle
+
+# IDEA temporary files
+**.iml
+.idea/artifacts
+.idea/libraries
+.idea/shelf
+.idea/*.xml
