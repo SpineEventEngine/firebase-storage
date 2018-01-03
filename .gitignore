@@ -36,3 +36,6 @@ out
 .idea/libraries
 .idea/shelf
 .idea/*.xml
+
+# Spine temp files
+.spine
