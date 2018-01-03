@@ -48,6 +48,12 @@ buildscript {
     }
 }
 
+ext {
+    credentialsPropertyFile = 'credentials.properties'
+    publishPlugin = "$rootDir/scripts/publish.gradle"
+    projectsToPublish = ['firebase-mirror']
+}
+
 allprojects {
     apply from: "$rootDir/ext.gradle"
     apply plugin: 'java'
@@ -135,4 +141,25 @@ subprojects {
             module.dependencies*.exported = true
         }
     }
+
+    javadoc {
+        source = sourceSets.main.allJava
+    }
+
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+        classifier "sources"
+    }
+
+    task testOutputJar(type: Jar) {
+        from sourceSets.test.output
+        classifier "test"
+    }
+
+    task javadocJar(type: Jar, dependsOn: 'javadoc') {
+        from ("$projectDir/build/docs/javadoc")
+        classifier "javadoc"
+    }
 }
+
+apply from: publishPlugin
