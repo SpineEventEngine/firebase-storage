@@ -19,3 +19,5 @@
  */
 
 rootProject.name = 'firebase-storage'
+
+include 'firebase-mirror'
