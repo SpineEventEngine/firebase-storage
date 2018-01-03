@@ -49,7 +49,7 @@ buildscript {
 }
 
 allprojects {
-    apply from: 'ext.gradle'
+    apply from: "$rootDir/ext.gradle"
     apply plugin: 'java'
     apply plugin: 'jacoco'
     apply plugin: 'idea'
