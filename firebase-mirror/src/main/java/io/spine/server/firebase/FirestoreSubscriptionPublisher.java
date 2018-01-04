@@ -25,6 +25,7 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.WriteBatch;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import io.spine.Identifier;
@@ -38,7 +39,6 @@ import java.util.concurrent.ExecutionException;
 
 import static com.google.cloud.firestore.Blob.fromBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableMap.of;
 import static io.spine.protobuf.AnyPacker.unpack;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.bytes;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.id;
@@ -85,8 +85,10 @@ final class FirestoreSubscriptionPublisher {
         final Message message = unpack(updateState);
         final String stringId = Identifier.toString(entityId);
         final byte[] stateBytes = message.toByteArray();
-        final Map<String, Object> data = of(bytes.toString(), fromBytes(stateBytes),
-                                            id.toString(), stringId);
+        final Map<String, Object> data = ImmutableMap.<String, Object>of(
+                bytes.toString(), fromBytes(stateBytes),
+                id.toString(), stringId
+        );
         final DocumentReference targetDocument = documentFor(stringId);
         log().info("Writing a state update of the type {} (id: {}) into the Firestore location {}.",
                    updateState.getTypeUrl(), stringId, targetDocument.getPath());
