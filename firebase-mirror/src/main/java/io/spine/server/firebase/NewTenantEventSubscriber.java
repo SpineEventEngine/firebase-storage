@@ -26,7 +26,6 @@ import io.spine.server.event.EventSubscriber;
 import io.spine.server.tenant.TenantAdded;
 
 import java.util.Set;
-import java.util.function.Consumer;
 
 import static com.google.common.collect.Sets.newConcurrentHashSet;
 
@@ -51,14 +50,14 @@ final class NewTenantEventSubscriber extends EventSubscriber {
      * received by this instance of {@code NewTenantEventSubscriber}.
      */
     private final Set<TenantId> knownTenants = newConcurrentHashSet();
-    private final NewTenantCallback tenantCallback;
+    private final TenantOperation tenantCallback;
 
     /**
      * Creates a new instance of {@code NewTenantEventSubscriber}.
      *
      * @param tenantCallback the callback to be invoked when a new tenant emerges
      */
-    NewTenantEventSubscriber(NewTenantCallback tenantCallback) {
+    NewTenantEventSubscriber(TenantOperation tenantCallback) {
         super();
         this.tenantCallback = tenantCallback;
     }
@@ -73,8 +72,4 @@ final class NewTenantEventSubscriber extends EventSubscriber {
         }
     }
 
-    interface NewTenantCallback {
-
-        void onNewTenant(TenantId newTenantId);
-    }
 }
