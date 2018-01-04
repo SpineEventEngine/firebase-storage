@@ -27,7 +27,7 @@ hs_err_pid*
 # Generated files
 generated
 build
-out
+*/out
 .gradle
 
 # IDEA temporary files
