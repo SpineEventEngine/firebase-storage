@@ -27,34 +27,31 @@ import io.spine.client.Subscription;
 import io.spine.client.SubscriptionId;
 import io.spine.client.SubscriptionUpdate;
 import io.spine.server.SubscriptionService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static io.spine.grpc.StreamObservers.noOpObserver;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
  * @author Dmytro Dashenkov
  */
-@DisplayName("SubscriptionObserver should")
-class SubscriptionObserverTest {
+public class SubscriptionObserverShould {
 
     private SubscriptionService service;
     private StreamObserver<SubscriptionUpdate> updateObserver;
 
-    @BeforeEach
-    void beforeEach() {
+    @Before
+    public void beforeEach() {
         service = mock(SubscriptionService.class);
         updateObserver = noOpObserver();
     }
 
     @Test
-    @DisplayName("activate all subscriptions")
-    void testOnNext() {
+    public void activate_all_subscriptions() {
         final SubscriptionObserver observer = new SubscriptionObserver(service, updateObserver);
         final Subscription subscription = Subscription.newBuilder()
                                                       .setId(newSubscriptionId())
@@ -64,26 +61,26 @@ class SubscriptionObserverTest {
     }
 
     @Test
-    @DisplayName("throw ISE upon error")
-    void testOnError() {
+    public void throw_ISE_upon_error() {
         final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         final Throwable throwable = new CustomThrowable();
-        final Throwable thrownException = assertThrows(IllegalStateException.class,
-                                                       () -> observer.onError(throwable));
-        assertTrue(thrownException.getCause() instanceof CustomThrowable);
+        try {
+            observer.onError(throwable);
+            fail("Exception not thrown");
+        } catch (IllegalStateException ise) {
+            assertTrue(ise.getCause() instanceof CustomThrowable);
+        }
     }
 
     @Test
-    @DisplayName("do nothing upon successful completion")
-    void testOnCompleted() {
+    public void do_nothing_upon_successful_completion() {
         final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         observer.onCompleted();
         observer.onCompleted();
     }
 
     @Test
-    @DisplayName("not accept nulls on construction")
-    void testCtor() {
+    public void not_accept_nulls_on_construction() {
         new NullPointerTester()
                 .setDefault(SubscriptionService.class, service)
                 .setDefault(StreamObserver.class, noOpObserver())
@@ -91,8 +88,7 @@ class SubscriptionObserverTest {
     }
 
     @Test
-    @DisplayName("not accept null arguments")
-    void testParams() throws NoSuchMethodException {
+    public void not_accept_null_arguments() throws NoSuchMethodException {
         final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         new NullPointerTester()
                 .ignore(SubscriptionObserver.class.getMethod("onError", Throwable.class))
