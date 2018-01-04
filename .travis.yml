@@ -2,8 +2,11 @@ language: java
 
 before_install:
   - chmod +x gradlew
-#  - openssl aes-256-cbc -K $encrypted_7dcf2dcd412f_key -iv $encrypted_7dcf2dcd412f_iv -in ./credentials.properties.enc -out ./credentials.properties -d
-  - openssl aes-256-cbc -K $encrypted_7dcf2dcd412f_key -iv $encrypted_7dcf2dcd412f_iv -in ./firebase-mirror/src/test/resources/serviceAccount.json.enc -out ./firebase-mirror/src/test/resources/serviceAccount.json -d
+  - openssl aes-256-cbc -K $encrypted_7dcf2dcd412f_key -iv $encrypted_7dcf2dcd412f_iv -in secrets.tar.enc -out secrets.tar -d
+  - tar xvf secrets.tar
+  - mkdir ./firebase-mirror/src/test/resources
+  - mv ./serviceAccount.json ./firebase-mirror/src/test/resources/serviceAccount.json
+
 
 script:
   - ./gradlew check --stacktrace
