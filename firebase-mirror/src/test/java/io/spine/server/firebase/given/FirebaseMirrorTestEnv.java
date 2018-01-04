@@ -22,6 +22,7 @@ package io.spine.server.firebase.given;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
+import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
@@ -32,6 +33,7 @@ import com.google.protobuf.util.Timestamps;
 import io.spine.client.ActorRequestFactory;
 import io.spine.client.CommandFactory;
 import io.spine.core.BoundedContextName;
+import io.spine.core.Command;
 import io.spine.core.CommandEnvelope;
 import io.spine.core.Event;
 import io.spine.core.EventContext;
@@ -41,6 +43,7 @@ import io.spine.core.UserId;
 import io.spine.people.PersonName;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
+import io.spine.server.aggregate.AggregateMessageDispatcher;
 import io.spine.server.aggregate.AggregateRepository;
 import io.spine.server.aggregate.Apply;
 import io.spine.server.command.Assign;
@@ -71,17 +74,16 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Suppliers.ofInstance;
 import static io.spine.Identifier.newUuid;
 import static io.spine.client.TestActorRequestFactory.newInstance;
 import static io.spine.server.BoundedContext.newName;
-import static io.spine.server.aggregate.AggregateMessageDispatcher.dispatchCommand;
 import static io.spine.server.projection.ProjectionEventDispatcher.dispatch;
 import static io.spine.server.storage.memory.InMemoryStorageFactory.newInstance;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
@@ -210,14 +212,23 @@ public final class FirebaseMirrorTestEnv {
         final CustomerAggregate aggregate =
                 createEntity(customerId, boundedContext, FMCustomer.class);
         final CommandFactory commandFactory = requestFactory.command();
-        Stream.of(createCommand(customerId), updateCommand(customerId))
-              .map(commandFactory::create)
-              .map(CommandEnvelope::of)
-              .forEach(cmd -> dispatchCommand(aggregate, cmd));
+
+        final FMCreateCustomer createCmd = createCommand(customerId);
+        final FMChangeCustomerName updateCmd = updateCommand(customerId);
+        dispatchCommand(aggregate, createCmd, commandFactory);
+        dispatchCommand(aggregate, updateCmd, commandFactory);
         final Stand stand = boundedContext.getStand();
         final TenantId tenantId = requestFactory.getTenantId();
         stand.post(tenantId == null ? defaultTenant() : tenantId, aggregate);
         return aggregate.getState();
+    }
+
+    private static void dispatchCommand(Aggregate<?, ?, ?> aggregate,
+                                        Message command,
+                                        CommandFactory factory) {
+        final Command cmd = factory.create(command);
+        final CommandEnvelope envelope = CommandEnvelope.of(cmd);
+        AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
     private static <I, E extends Entity<I, S>, S extends Message> E
@@ -270,10 +281,11 @@ public final class FirebaseMirrorTestEnv {
     public static BoundedContext createBoundedContext(String name, boolean multitenant) {
         final BoundedContextName contextName = newName(name);
         final StorageFactory storageFactory = newInstance(contextName, multitenant);
+        final Supplier<StorageFactory> storageSupplier = ofInstance(storageFactory);
         final BoundedContext result = BoundedContext.newBuilder()
                                                     .setName(name)
                                                     .setMultitenant(multitenant)
-                                                    .setStorageFactorySupplier(() -> storageFactory)
+                                                    .setStorageFactorySupplier(storageSupplier)
                                                     .build();
         result.register(new CustomerRepository());
         result.register(new SessionRepository());

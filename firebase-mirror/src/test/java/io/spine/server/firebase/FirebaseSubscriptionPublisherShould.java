@@ -29,32 +29,29 @@ import io.spine.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
 
 import static io.spine.protobuf.AnyPacker.pack;
 import static java.util.Collections.singleton;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Dmytro Dashenkov
  */
-@DisplayName("Firestore publisher should")
-@Tag("CI")
-class FirebaseSubscriptionPublisherTest {
+//@Tag("CI")
+public class FirebaseSubscriptionPublisherShould {
 
     private static final CollectionReference targetCollection =
-            FirebaseMirrorTestEnv.getFirestore().collection("test_records");
+            FirebaseMirrorTestEnv.getFirestore()
+                                 .collection("test_records");
 
     @Test
-    @DisplayName("escape illegal chars in a document key")
-    void testEscapeKey() throws ExecutionException,
-                                InterruptedException,
-                                InvalidProtocolBufferException {
+    public void escape_illegal_chars_in_a_document_key() throws ExecutionException,
+                                                         InterruptedException,
+                                                         InvalidProtocolBufferException {
         final FirestoreSubscriptionPublisher publisher =
                 new FirestoreSubscriptionPublisher(targetCollection);
         final String rawId = "___&$id001%-_foobar";
@@ -70,7 +67,8 @@ class FirebaseSubscriptionPublisherTest {
                                                           .build();
         publisher.publish(singleton(update));
         final DocumentSnapshot document = targetCollection.document(expectedId)
-                                                          .get().get();
+                                                          .get()
+                                                          .get();
         final String entityStateId = document.getString(EntityStateField.id.toString());
         assertEquals(rawId, entityStateId);
 

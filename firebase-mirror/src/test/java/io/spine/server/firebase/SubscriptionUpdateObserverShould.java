@@ -24,9 +24,7 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.common.testing.NullPointerTester;
 import io.grpc.stub.StreamObserver;
 import io.spine.server.entity.rejection.EntityAlreadyArchived;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -36,15 +34,13 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 /**
  * @author Dmytro Dashenkov
  */
-@DisplayName("SubscriptionUpdate observer should")
-public class SubscriptionUpdateObserverTest {
+public class SubscriptionUpdateObserverShould {
 
     @Test
-    @DisplayName("ignore error")
-    @Tag("CI")
-    void testOnError() {
+//    @Tag("CI")
+    public void ignore_error() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
-        final String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
+        final String testMessage = SubscriptionUpdateObserverShould.class.getSimpleName();
         observer.onError(new IllegalArgumentException(testMessage)); // Unchecked exception.
         observer.onError(new IOException(testMessage)); // Checked exception.
         observer.onError(new OutOfMemoryError(testMessage)); // JVM error.
@@ -52,24 +48,21 @@ public class SubscriptionUpdateObserverTest {
     }
 
     @Test
-    @DisplayName("ignore completion")
-    @Tag("CI")
-    void testOnCompleted() {
+//    @Tag("CI")
+    public void ignore_completion() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         observer.onCompleted();
         observer.onCompleted();
     }
 
     @Test
-    @DisplayName("not accept nulls on construction")
-    void testCtor() {
+    public void not_accept_nulls_on_construction() {
         new NullPointerTester().testAllPublicConstructors(SubscriptionUpdateObserver.class);
     }
 
     @Test
-    @DisplayName("not accept null arguments")
-    @Tag("CI")
-    void testParams() throws NoSuchMethodException {
+//    @Tag("CI")
+    public void not_accept_null_arguments() throws NoSuchMethodException {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         new NullPointerTester()
                 .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
