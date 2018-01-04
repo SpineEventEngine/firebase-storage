@@ -70,6 +70,7 @@ import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStat
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.id;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createBoundedContext;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createCustomer;
+import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -99,10 +100,13 @@ public class FirebaseSubscriptionMirrorShould {
     /**
      * The {@link Firestore} instance to access from the mirror.
      *
+     * <p>This field is not {@code final} to make it possible to initialize it in
+     * {@link org.junit.Before \@Before} methods.
+     *
      * <p>This field is declared {@code static} to make it accessible in {@link org.junit.AfterClass
      * \@AfterClass} methods for the test data clean up.
      */
-    private static final Firestore firestore = FirebaseMirrorTestEnv.getFirestore();
+    private static Firestore firestore;
 
     private static final TypeUrl CUSTOMER_TYPE = TypeUrl.of(FMCustomer.class);
     private static final TypeUrl SESSION_TYPE = TypeUrl.of(FMSession.class);
@@ -124,7 +128,7 @@ public class FirebaseSubscriptionMirrorShould {
 
     @AfterClass
     public static void afterAll() throws ExecutionException, InterruptedException {
-        final WriteBatch batch = firestore.batch();
+        final WriteBatch batch = getFirestore().batch();
         for (DocumentReference document : documents) {
             batch.delete(document);
         }
@@ -136,6 +140,7 @@ public class FirebaseSubscriptionMirrorShould {
 
     @Before
     public void beforeEach() {
+        firestore = getFirestore();
         initializeEnvironment(false);
     }
 

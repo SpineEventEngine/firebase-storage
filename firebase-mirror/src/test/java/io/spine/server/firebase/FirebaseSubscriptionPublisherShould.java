@@ -34,6 +34,7 @@ import org.junit.Test;
 import java.util.concurrent.ExecutionException;
 
 import static io.spine.protobuf.AnyPacker.pack;
+import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -44,14 +45,11 @@ import static org.junit.Assert.assertNotNull;
 //@Tag("CI")
 public class FirebaseSubscriptionPublisherShould {
 
-    private static final CollectionReference targetCollection =
-            FirebaseMirrorTestEnv.getFirestore()
-                                 .collection("test_records");
-
     @Test
     public void escape_illegal_chars_in_a_document_key() throws ExecutionException,
-                                                         InterruptedException,
-                                                         InvalidProtocolBufferException {
+                                                                InterruptedException,
+                                                                InvalidProtocolBufferException {
+        final CollectionReference targetCollection = getFirestore().collection("test_records");
         final FirestoreSubscriptionPublisher publisher =
                 new FirestoreSubscriptionPublisher(targetCollection);
         final String rawId = "___&$id001%-_foobar";
