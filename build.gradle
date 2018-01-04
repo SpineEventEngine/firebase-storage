@@ -48,8 +48,10 @@ buildscript {
 }
 
 ext {
-    credentialsPropertyFile = 'credentials.properties'
     publishPlugin = "$rootDir/scripts/publish.gradle"
+    jacocoPlugin = "$rootDir/scripts/jacoco.gradle"
+
+    credentialsPropertyFile = 'credentials.properties'
     projectsToPublish = ['firebase-mirror']
 }
 
@@ -161,3 +163,5 @@ subprojects {
 }
 
 apply from: publishPlugin
+
+apply from: jacocoPlugin
