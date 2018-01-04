@@ -37,7 +37,6 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 public class SubscriptionUpdateObserverShould {
 
     @Test
-//    @Tag("CI")
     public void ignore_error() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         final String testMessage = SubscriptionUpdateObserverShould.class.getSimpleName();
@@ -48,7 +47,6 @@ public class SubscriptionUpdateObserverShould {
     }
 
     @Test
-//    @Tag("CI")
     public void ignore_completion() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         observer.onCompleted();
@@ -61,7 +59,6 @@ public class SubscriptionUpdateObserverShould {
     }
 
     @Test
-//    @Tag("CI")
     public void not_accept_null_arguments() throws NoSuchMethodException {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         new NullPointerTester()
