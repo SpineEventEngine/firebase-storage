@@ -43,7 +43,6 @@ buildscript {
             // exclude an old Guava version
             exclude group: 'com.google.guava'
         }
-        classpath "org.junit.platform:junit-platform-gradle-plugin:${jUnitPlatformVersion}"
         classpath "io.spine.tools:spine-model-compiler:${spineBaseVersion}"
     }
 }
@@ -90,7 +89,6 @@ subprojects {
     }
 
     apply plugin: 'com.google.protobuf'
-    apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'io.spine.tools.spine-model-compiler'
 
     sourceCompatibility = JavaVersion.VERSION_1_7
