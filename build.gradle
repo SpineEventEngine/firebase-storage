@@ -43,7 +43,6 @@ buildscript {
             // exclude an old Guava version
             exclude group: 'com.google.guava'
         }
-        classpath "org.junit.platform:junit-platform-gradle-plugin:${jUnitPlatformVersion}"
         classpath "io.spine.tools:spine-model-compiler:${spineBaseVersion}"
     }
 }
@@ -90,35 +89,22 @@ subprojects {
     }
 
     apply plugin: 'com.google.protobuf'
-    apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'io.spine.tools.spine-model-compiler'
 
     sourceCompatibility = JavaVersion.VERSION_1_7
     targetCompatibility = JavaVersion.VERSION_1_7
 
     dependencies {
-        compile (group: 'io.spine', name: 'spine-testutil-server', version: spineVersion)
+        compile group: 'io.spine', name: 'spine-testutil-server', version: spineVersion
         compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
         compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
         compile group: 'com.google.guava', name: 'guava', version: guavaVersion
 
         testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
-        testCompile("io.spine:spine-testutil-base:${spineBaseVersion}") {
-            // We are using JUnit 5.x instead of 4.x dependency of Spine testing framework.
-            exclude group: 'junit'
-        }
-        testCompile("io.spine:spine-testutil-core:${spineVersion}") {
-            // We are using JUnit 5.x instead of 4.x dependency of Spine testing framework.
-            exclude group: 'junit'
-        }
-        testCompile("io.spine:spine-testutil-client:${spineVersion}") {
-            // We are using JUnit 5.x instead of 4.x dependency of Spine testing framework.
-            exclude group: 'junit'
-        }
-        testCompile("io.spine:spine-testutil-server:${spineVersion}") {
-            // We are using JUnit 5.x instead of 4.x dependency of Spine testing framework.
-            exclude group: 'junit'
-        }
+        testCompile("io.spine:spine-testutil-base:${spineBaseVersion}")
+        testCompile("io.spine:spine-testutil-core:${spineVersion}")
+        testCompile("io.spine:spine-testutil-client:${spineVersion}")
+        testCompile("io.spine:spine-testutil-server:${spineVersion}")
         testCompile "com.google.guava:guava-testlib:$guavaVersion"
         testRuntime group: 'org.slf4j', name: 'slf4j-jdk14', version: slf4jVersion
     }
