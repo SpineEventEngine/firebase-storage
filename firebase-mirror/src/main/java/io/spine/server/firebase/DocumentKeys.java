@@ -53,14 +53,14 @@ final class DocumentKeys {
      * <p>All the illegal chars are deleted from the source string. If no characters are left after
      * this operation, an {@link IllegalArgumentException} is thrown.
      *
-     * @param dirtyKey the string to transform
+     * @param originalKey the string to transform
      * @return a valid Firestore key
      */
-    static String escape(String dirtyKey) {
-        final String trimmedKey = trimUnderscore(dirtyKey);
+    static String escape(String originalKey) {
+        final String trimmedKey = trimUnderscore(originalKey);
         final String result = INVALID_KEY_CHARS.matcher(trimmedKey)
                                                .replaceAll("");
-        checkArgument(!result.isEmpty(), "Key `%s` is invalid.", dirtyKey);
+        checkArgument(!result.isEmpty(), "Key `%s` is invalid.", originalKey);
         return result;
     }
 
