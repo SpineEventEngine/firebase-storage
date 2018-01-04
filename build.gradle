@@ -87,13 +87,11 @@ subprojects {
     apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'io.spine.tools.spine-model-compiler'
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
 
     dependencies {
-        compile (group: 'io.spine', name: 'spine-testutil-server', version: spineVersion) {
-            exclude group: 'junit'
-        }
+        compile (group: 'io.spine', name: 'spine-testutil-server', version: spineVersion)
         compile group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
         compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
         compile group: 'com.google.guava', name: 'guava', version: guavaVersion
@@ -116,8 +114,6 @@ subprojects {
             exclude group: 'junit'
         }
         testCompile "com.google.guava:guava-testlib:$guavaVersion"
-        testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: jUnitVersion
-        testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: jUnitVersion
         testRuntime group: 'org.slf4j', name: 'slf4j-jdk14', version: slf4jVersion
     }
 
@@ -153,56 +149,4 @@ subprojects {
             module.dependencies*.exported = true
         }
     }
-
-    junitPlatform {
-        platformVersion "${jUnitPlatformVersion}"
-
-        logManager 'java.util.logging.LogManager'
-
-        selectors {
-            // Add the test selectors as soon as there are any tests in the project.
-        }
-
-        filters {
-            includeClassNamePatterns '.*Test'
-        }
-    }
-
-    // This is a workaround to make JUnit 5 work with Jacoco library.
-    // There is an open issue here:
-    // <link>https://discuss.gradle.org/t/jacocotestreport-task-fails-if-jacoco-plugin-is-applied-in-afterevaluate/835</link>
-    // TODO:2018-01-03:dmytro.dashenkov: Revisit the workaround once the issue is resolved.
-    project.afterEvaluate {
-        def junitPlatformTestTask = project.tasks.getByName('junitPlatformTest')
-
-        // configure jacoco to analyze the junitPlatformTest task
-        jacoco {
-            // this tool version is known to be compatible with JUnit 5.
-            toolVersion = "0.7.6.201602180812"
-            applyTo junitPlatformTestTask
-        }
-
-        codeCoverageReport.dependsOn {
-            subprojects*.test
-        }
-    }
-}
-
-task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-
-    subprojects.each {
-        sourceSets it.sourceSets.main
-    }
-
-    reports {
-        xml.enabled = true
-        xml.destination = "${buildDir}/reports/jacoco/report.xml"
-        html.enabled = false
-        csv.enabled = false
-    }
-}
-
-codeCoverageReport.dependsOn {
-    subprojects*.test
 }
