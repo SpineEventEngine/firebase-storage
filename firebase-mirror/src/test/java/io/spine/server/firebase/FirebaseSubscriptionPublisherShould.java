@@ -42,7 +42,6 @@ import static org.junit.Assert.assertNotNull;
 /**
  * @author Dmytro Dashenkov
  */
-//@Tag("CI")
 public class FirebaseSubscriptionPublisherShould {
 
     @Test

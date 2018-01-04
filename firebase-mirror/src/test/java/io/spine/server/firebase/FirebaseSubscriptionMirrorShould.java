@@ -94,7 +94,6 @@ import static org.mockito.Mockito.verify;
  * @author Dmytro Dashenkov
  */
 @SuppressWarnings("ClassWithTooManyMethods")
-//@Tag("CI")
 public class FirebaseSubscriptionMirrorShould {
 
     /**
