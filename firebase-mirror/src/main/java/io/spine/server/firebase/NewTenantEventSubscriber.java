@@ -32,7 +32,7 @@ import static com.google.common.collect.Sets.newConcurrentHashSet;
 /**
  * An {@link EventSubscriber} for the {@link TenantAdded} events.
  *
- * <p>Triggers a callback on new tenant.
+ * <p>Triggers a {@linkplain TenantCallback callback} on new tenant.
  *
  * <p>Not all the events cause the callback invocation, but only those that introduce a new
  * ({@linkplain #knownTenants previously unknown} to this instance of
@@ -50,14 +50,14 @@ final class NewTenantEventSubscriber extends EventSubscriber {
      * received by this instance of {@code NewTenantEventSubscriber}.
      */
     private final Set<TenantId> knownTenants = newConcurrentHashSet();
-    private final TenantOperation tenantCallback;
+    private final TenantCallback tenantCallback;
 
     /**
      * Creates a new instance of {@code NewTenantEventSubscriber}.
      *
      * @param tenantCallback the callback to be invoked when a new tenant emerges
      */
-    NewTenantEventSubscriber(TenantOperation tenantCallback) {
+    NewTenantEventSubscriber(TenantCallback tenantCallback) {
         super();
         this.tenantCallback = tenantCallback;
     }
@@ -68,8 +68,22 @@ final class NewTenantEventSubscriber extends EventSubscriber {
         log().info("Received TenantAdded event. New tenant ID is: {}", tenantId);
         if (!knownTenants.contains(tenantId)) {
             knownTenants.add(tenantId);
-            tenantCallback.onNewTenant(tenantId);
+            tenantCallback.onTenant(tenantId);
         }
     }
 
+    /**
+     * An interface of the callback triggered when a new tenant is discovered.
+     *
+     * @author Dmytro Dashenkov
+     */
+    interface TenantCallback {
+
+        /**
+         * Reacts on a new tenant.
+         *
+         * @param tenantId the new tenant ID
+         */
+        void onTenant(TenantId tenantId);
+    }
 }

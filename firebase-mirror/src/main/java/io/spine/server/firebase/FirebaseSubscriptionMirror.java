@@ -39,6 +39,7 @@ import io.spine.core.UserId;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
 import io.spine.server.event.EventSubscriber;
+import io.spine.server.firebase.NewTenantEventSubscriber.TenantCallback;
 import io.spine.server.integration.IntegrationBus;
 import io.spine.server.tenant.TenantAwareOperation;
 import io.spine.server.tenant.TenantIndex;
@@ -254,8 +255,8 @@ public final class FirebaseSubscriptionMirror {
     }
 
     private EventSubscriber createTenantEventSubscriber() {
-        final TenantOperation tenantOperation = new ReflectExistingTopics();
-        final EventSubscriber result = new NewTenantEventSubscriber(tenantOperation);
+        final TenantCallback tenantCallback = new ReflectExistingTopics();
+        final EventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
         return result;
     }
 
@@ -283,9 +284,8 @@ public final class FirebaseSubscriptionMirror {
         final Class<? extends Message> entityClass = type.getJavaClass();
         final Topic topic = topics.allOf(entityClass);
         subscriptionTopics.add(topic);
-        final TenantOperation operation = new ReflectTopic(topic);
         for (TenantId knownTenant : knownTenants) {
-            operation.onNewTenant(knownTenant);
+            reflect(topic, knownTenant);
         }
     }
 
@@ -516,31 +516,13 @@ public final class FirebaseSubscriptionMirror {
     }
 
     /**
-     * A {@link TenantOperation} which starts {@linkplain #reflect(Topic, TenantId) reflecting}
-     * the given {@code Topic} for the operand tenant.
+     * A {@link TenantCallback} which starts {@linkplain #reflect(Topic, TenantId) reflecting}
+     * all the previously requested {@code Topic}s for the new tenant.
      */
-    private class ReflectTopic implements TenantOperation {
-
-        private final Topic topic;
-
-        private ReflectTopic(Topic topic) {
-            this.topic = topic;
-        }
+    private class ReflectExistingTopics implements TenantCallback {
 
         @Override
-        public void onNewTenant(TenantId tenantId) {
-            reflect(topic, tenantId);
-        }
-    }
-
-    /**
-     * A {@link TenantOperation} which starts {@linkplain #reflect(Topic, TenantId) reflecting}
-     * all the previously requested {@code Topic}s for the operand tenant.
-     */
-    private class ReflectExistingTopics implements TenantOperation {
-
-        @Override
-        public void onNewTenant(TenantId tenantId) {
+        public void onTenant(TenantId tenantId) {
             for (Topic topic : subscriptionTopics) {
                 reflect(topic, tenantId);
             }
