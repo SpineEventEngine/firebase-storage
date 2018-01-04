@@ -163,5 +163,4 @@ subprojects {
 }
 
 apply from: publishPlugin
-
 apply from: jacocoPlugin
