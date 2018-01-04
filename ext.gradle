@@ -27,6 +27,4 @@ ext {
     protobufGradlePluginVersion = '0.8.3'
     guavaVersion = '20.0'
     slf4jVersion = '1.7.21'
-    jUnitPlatformVersion = '1.0.0'
-    jUnitVersion = '5.0.0'
 }

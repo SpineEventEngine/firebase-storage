@@ -43,9 +43,16 @@ buildscript {
             // exclude an old Guava version
             exclude group: 'com.google.guava'
         }
-        classpath "org.junit.platform:junit-platform-gradle-plugin:${jUnitPlatformVersion}"
         classpath "io.spine.tools:spine-model-compiler:${spineBaseVersion}"
     }
+}
+
+ext {
+    publishPlugin = "$rootDir/scripts/publish.gradle"
+    jacocoPlugin = "$rootDir/scripts/jacoco.gradle"
+
+    credentialsPropertyFile = 'credentials.properties'
+    projectsToPublish = ['firebase-mirror']
 }
 
 allprojects {
@@ -64,7 +71,7 @@ allprojects {
         mavenLocal()
     }
 
-    group = 'io.spine.server'
+    group = 'io.spine'
     version = spineVersion
 }
 
@@ -84,7 +91,6 @@ subprojects {
     }
 
     apply plugin: 'com.google.protobuf'
-    apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'io.spine.tools.spine-model-compiler'
 
     sourceCompatibility = JavaVersion.VERSION_1_7
@@ -135,4 +141,26 @@ subprojects {
             module.dependencies*.exported = true
         }
     }
+
+    javadoc {
+        source = sourceSets.main.allJava
+    }
+
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+        classifier "sources"
+    }
+
+    task testOutputJar(type: Jar) {
+        from sourceSets.test.output
+        classifier "test"
+    }
+
+    task javadocJar(type: Jar, dependsOn: 'javadoc') {
+        from ("$projectDir/build/docs/javadoc")
+        classifier "javadoc"
+    }
 }
+
+apply from: publishPlugin
+apply from: jacocoPlugin

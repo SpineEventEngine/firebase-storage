@@ -18,6 +18,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-rootProject.name = 'firebase-storage'
+package io.spine.server.firebase;
 
-include 'firebase-mirror'
+import org.junit.Test;
+
+import static io.spine.test.Tests.assertHasPrivateParameterlessCtor;
+
+/**
+ * @author Dmytro Dashenkov
+ */
+public class DocumentKeysShould {
+
+    @Test
+    public void have_util_ctor() {
+        assertHasPrivateParameterlessCtor(DocumentKeys.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void throw_IAE_on_invalid_key() {
+        final String invalidKey = "#@)?$";
+        DocumentKeys.escape(invalidKey);
+    }
+}

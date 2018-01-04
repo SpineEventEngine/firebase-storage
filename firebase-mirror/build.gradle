@@ -18,6 +18,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-rootProject.name = 'firebase-storage'
+ext {
+    nettyBoringsslVersion = '2.0.6.Final'
+}
 
-include 'firebase-mirror'
+dependencies {
+    compile('com.google.firebase:firebase-admin:5.7.0'){
+        exclude group: 'com.google.guava'
+    }
+    testCompile ("io.spine:spine-testutil-server:$spineVersion") {
+        exclude group: 'junit'
+    }
+    testCompile "com.google.guava:guava-testlib:$guavaVersion"
+    testCompile "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
+}
