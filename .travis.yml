@@ -7,7 +7,6 @@ before_install:
   - mkdir ./firebase-mirror/src/test/resources
   - mv ./serviceAccount.json ./firebase-mirror/src/test/resources/serviceAccount.json
 
-
 script:
   - ./gradlew check --stacktrace
 
