@@ -71,6 +71,7 @@ import io.spine.time.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -102,7 +103,8 @@ public final class FirebaseMirrorTestEnv {
     private static final TestEventFactory eventFactory =
             TestEventFactory.newInstance(FirebaseMirrorTestEnv.class);
 
-    private static final Firestore firestore = createFirestore();
+    @Nullable
+    private static final Firestore firestore = tryCreateFirestore();
 
     // Prevent utility class instantiation.
     private FirebaseMirrorTestEnv() {
@@ -121,24 +123,31 @@ public final class FirebaseMirrorTestEnv {
                           .build();
     }
 
-    @SuppressWarnings("NonThreadSafeLazyInitialization") // OK for a test.
     public static Firestore getFirestore() {
+        assumeNotNull(firestore);
         return firestore;
     }
 
-    private static Firestore createFirestore() {
+    @Nullable
+    private static Firestore tryCreateFirestore() {
         final InputStream firebaseSecret = FirebaseMirrorTestEnv.class
                 .getClassLoader()
                 .getResourceAsStream(FIREBASE_SERVICE_ACC_SECRET);
-        // Check if `serviceAccount.json` file exists.
-        assumeNotNull(firebaseSecret);
-        final GoogleCredentials credentials;
-        try {
-            credentials = GoogleCredentials.fromStream(firebaseSecret);
-        } catch (IOException e) {
-            log().error("Error while reading Firebase service account file.", e);
-            throw new IllegalStateException(e);
+        if (firebaseSecret == null) {
+            return null;
+        } else {
+            final GoogleCredentials credentials;
+            try {
+                credentials = GoogleCredentials.fromStream(firebaseSecret);
+            } catch (IOException e) {
+                log().error("Error while reading Firebase service account file.", e);
+                throw new IllegalStateException(e);
+            }
+            return createFirestore(credentials);
         }
+    }
+
+    private static Firestore createFirestore(GoogleCredentials credentials) {
         final FirebaseOptions options = new FirebaseOptions.Builder()
                 .setDatabaseUrl(DATABASE_URL)
                 .setCredentials(credentials)
