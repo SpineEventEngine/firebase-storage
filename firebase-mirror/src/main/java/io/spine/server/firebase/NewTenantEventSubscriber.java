@@ -51,14 +51,14 @@ final class NewTenantEventSubscriber extends EventSubscriber {
      * received by this instance of {@code NewTenantEventSubscriber}.
      */
     private final Set<TenantId> knownTenants = newConcurrentHashSet();
-    private final Consumer<TenantId> tenantCallback;
+    private final NewTenantCallback tenantCallback;
 
     /**
      * Creates a new instance of {@code NewTenantEventSubscriber}.
      *
      * @param tenantCallback the callback to be invoked when a new tenant emerges
      */
-    NewTenantEventSubscriber(Consumer<TenantId> tenantCallback) {
+    NewTenantEventSubscriber(NewTenantCallback tenantCallback) {
         super();
         this.tenantCallback = tenantCallback;
     }
@@ -69,7 +69,12 @@ final class NewTenantEventSubscriber extends EventSubscriber {
         log().info("Received TenantAdded event. New tenant ID is: {}", tenantId);
         if (!knownTenants.contains(tenantId)) {
             knownTenants.add(tenantId);
-            tenantCallback.accept(tenantId);
+            tenantCallback.onNewTenant(tenantId);
         }
+    }
+
+    interface NewTenantCallback {
+
+        void onNewTenant(TenantId newTenantId);
     }
 }

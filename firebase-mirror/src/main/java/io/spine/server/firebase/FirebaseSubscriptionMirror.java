@@ -23,6 +23,7 @@ package io.spine.server.firebase;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Message;
 import io.grpc.stub.StreamObserver;
@@ -38,20 +39,21 @@ import io.spine.core.UserId;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
 import io.spine.server.event.EventSubscriber;
+import io.spine.server.firebase.NewTenantEventSubscriber.NewTenantCallback;
+import io.spine.server.integration.IntegrationBus;
 import io.spine.server.tenant.TenantAwareOperation;
+import io.spine.server.tenant.TenantIndex;
 import io.spine.type.TypeUrl;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Lists.newLinkedList;
 import static com.google.common.collect.Sets.newConcurrentHashSet;
 import static com.google.common.collect.Sets.newHashSet;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * A client of {@link SubscriptionService} that mirrors the received messages to Firebase.
@@ -253,19 +255,17 @@ public final class FirebaseSubscriptionMirror {
     }
 
     private EventSubscriber createTenantEventSubscriber() {
-        final Consumer<TenantId> tenantCallback = tenantId -> {
-            subscriptionTopics.forEach(topic -> reflect(topic, tenantId));
-            knownTenants.add(tenantId);
-        };
+        final NewTenantCallback tenantCallback = new ReflectExistingTopics();
         final EventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
         return result;
     }
 
     private static void registerEventSubscriber(Collection<BoundedContext> contexts,
                                                 EventSubscriber eventSubscriber) {
-        contexts.stream()
-                .map(BoundedContext::getIntegrationBus)
-                .forEach(bus -> bus.register(eventSubscriber));
+        for (BoundedContext context : contexts) {
+            final IntegrationBus integrationBus = context.getIntegrationBus();
+            integrationBus.register(eventSubscriber);
+        }
     }
 
     /**
@@ -284,18 +284,10 @@ public final class FirebaseSubscriptionMirror {
         final Class<? extends Message> entityClass = type.getJavaClass();
         final Topic topic = topics.allOf(entityClass);
         subscriptionTopics.add(topic);
-        final Consumer<TenantId> operation = reflectFunction(topic);
-        knownTenants.forEach(operation);
-    }
-
-    /**
-     * Partially applies {@link #reflect(Topic, TenantId)} method to the given {@code topic}.
-     *
-     * @param topic the topic to reflect
-     * @return a function
-     */
-    private Consumer<TenantId> reflectFunction(Topic topic) {
-        return tenantId -> reflect(topic, tenantId);
+        final NewTenantCallback operation = new ReflectTopic(topic);
+        for (TenantId knownTenant : knownTenants) {
+            operation.onNewTenant(knownTenant);
+        }
     }
 
     /**
@@ -507,10 +499,12 @@ public final class FirebaseSubscriptionMirror {
         }
 
         private static Collection<TenantId> getAllTenants(Collection<BoundedContext> contexts) {
-            final Collection<TenantId> result = contexts.stream()
-                                                        .map(BoundedContext::getTenantIndex)
-                                                        .flatMap(index -> index.getAll().stream())
-                                                        .collect(toSet());
+            final Collection<TenantId> tenants = newLinkedList();
+            for (BoundedContext context : contexts) {
+                final TenantIndex tenantIndex = context.getTenantIndex();
+                tenants.addAll(tenantIndex.getAll());
+            }
+            final ImmutableSet<TenantId> result = ImmutableSet.copyOf(tenants);
             return result;
         }
 
@@ -519,6 +513,31 @@ public final class FirebaseSubscriptionMirror {
                     (firestore != null) ^ (document != null) ^ (reflectionRule != null),
                     "Only one of Firestore or Firestore Document or reflection rule must be set."
             );
+        }
+    }
+
+    private class ReflectTopic implements NewTenantCallback {
+
+        private final Topic topic;
+
+        private ReflectTopic(Topic topic) {
+            this.topic = topic;
+        }
+
+        @Override
+        public void onNewTenant(TenantId newTenantId) {
+            reflect(topic, newTenantId);
+        }
+    }
+
+    private class ReflectExistingTopics implements NewTenantCallback {
+
+        @Override
+        public void onNewTenant(TenantId newTenantId) {
+            for (Topic topic : subscriptionTopics) {
+                reflect(topic, newTenantId);
+            }
+            knownTenants.add(newTenantId);
         }
     }
 }
