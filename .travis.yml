@@ -3,7 +3,7 @@ language: java
 before_install:
   - chmod +x gradlew
   # Decrypt the archive with all the confidential info (e.g. credentials).
-  - openssl aes-256-cbc -K $encrypted_7dcf2dcd412f_key -iv $encrypted_7dcf2dcd412f_iv -in secrets.tar.enc -out secrets.tar -d
+  - openssl aes-256-cbc -K $encrypted_a295785573ef_key -iv $encrypted_a295785573ef_iv -in secrets.tar.enc -out secrets.tar -d
   # Extract the confidential files from the archive.
   - tar xvf secrets.tar
   # Move the `serviceAccount.json` file to the place where it is used.
