@@ -23,8 +23,4 @@ final def SPINE_VERSION = '1.0.0-pre2'
 ext {
     spineVersion = SPINE_VERSION
     spineBaseVersion = '1.0.0-SNAPSHOT'
-
-    protobufGradlePluginVersion = '0.8.3'
-    guavaVersion = '20.0'
-    slf4jVersion = '1.7.21'
 }

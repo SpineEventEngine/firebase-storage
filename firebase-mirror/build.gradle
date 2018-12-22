@@ -23,12 +23,8 @@ ext {
 }
 
 dependencies {
-    compile('com.google.firebase:firebase-admin:5.7.0'){
-        exclude group: 'com.google.guava'
-    }
-    testCompile ("io.spine:spine-testutil-server:$spineVersion") {
-        exclude group: 'junit'
-    }
-    testCompile "com.google.guava:guava-testlib:$guavaVersion"
+    implementation deps.build.firebaseAdmin
+    testImplementation deps.test.guavaTestlib
+    testImplementation "io.spine:spine-testutil-server:$spineVersion"
     testCompile "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
 }
