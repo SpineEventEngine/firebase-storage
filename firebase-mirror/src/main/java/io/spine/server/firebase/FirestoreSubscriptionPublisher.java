@@ -28,7 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Any;
 import com.google.protobuf.Message;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.storage.StorageField;
 import org.slf4j.Logger;
@@ -85,7 +85,7 @@ final class FirestoreSubscriptionPublisher {
         final Message message = unpack(updateState);
         final String stringId = Identifier.toString(entityId);
         final byte[] stateBytes = message.toByteArray();
-        final Map<String, Object> data = ImmutableMap.<String, Object>of(
+        final Map<String, Object> data = ImmutableMap.of(
                 bytes.toString(), fromBytes(stateBytes),
                 id.toString(), stringId
         );
@@ -127,7 +127,7 @@ final class FirestoreSubscriptionPublisher {
          * The string field for the entity ID.
          *
          * <p>The ID is converted to {@code String} by the rules of
-         * {@link io.spine.Identifier#toString(Object) Identifier.toString(id)}.
+         * {@link io.spine.base.Identifier#toString(Object) Identifier.toString(id)}.
          */
         id,
 

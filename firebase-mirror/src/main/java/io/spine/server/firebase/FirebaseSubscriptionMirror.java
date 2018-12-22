@@ -38,7 +38,7 @@ import io.spine.core.TenantId;
 import io.spine.core.UserId;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
-import io.spine.server.event.EventSubscriber;
+import io.spine.server.event.AbstractEventSubscriber;
 import io.spine.server.firebase.NewTenantEventSubscriber.TenantCallback;
 import io.spine.server.integration.IntegrationBus;
 import io.spine.server.tenant.TenantAwareOperation;
@@ -114,8 +114,8 @@ import static com.google.common.collect.Sets.newHashSet;
  *     <li>{@code bytes}: BLOB.
  * </ul>
  *
- * <p>The {@code id} field contains the {@linkplain io.spine.Identifier#toString(Object) string}
- * representation of the entity ID.
+ * <p>The {@code id} field contains the {@linkplain io.spine.base.Identifier#toString(Object)
+ * string} representation of the entity ID.
  *
  * <p>The {@code bytes} field contains the serialized entity state.
  *
@@ -250,18 +250,18 @@ public final class FirebaseSubscriptionMirror {
      * @param contexts the bounded contexts to subscribe to the events from
      */
     private void initEventSubscriber(Collection<BoundedContext> contexts) {
-        final EventSubscriber tenantEventSubscriber = createTenantEventSubscriber();
+        final AbstractEventSubscriber tenantEventSubscriber = createTenantEventSubscriber();
         registerEventSubscriber(contexts, tenantEventSubscriber);
     }
 
-    private EventSubscriber createTenantEventSubscriber() {
+    private AbstractEventSubscriber createTenantEventSubscriber() {
         final TenantCallback tenantCallback = new ReflectExistingTopics();
-        final EventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
+        final AbstractEventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
         return result;
     }
 
     private static void registerEventSubscriber(Collection<BoundedContext> contexts,
-                                                EventSubscriber eventSubscriber) {
+                                                AbstractEventSubscriber eventSubscriber) {
         for (BoundedContext context : contexts) {
             final IntegrationBus integrationBus = context.getIntegrationBus();
             integrationBus.register(eventSubscriber);
@@ -281,7 +281,7 @@ public final class FirebaseSubscriptionMirror {
      */
     public void reflect(TypeUrl type) {
         checkNotNull(type);
-        final Class<? extends Message> entityClass = type.getJavaClass();
+        final Class<? extends Message> entityClass = type.getMessageClass();
         final Topic topic = topics.allOf(entityClass);
         subscriptionTopics.add(topic);
         for (TenantId knownTenant : knownTenants) {
@@ -479,6 +479,7 @@ public final class FirebaseSubscriptionMirror {
          *
          * @return new instance of {@code FirebaseSubscriptionMirror} with the given parameters
          */
+        @SuppressWarnings("CheckReturnValue") // OK for builder.
         public FirebaseSubscriptionMirror build() {
             checkState(!boundedContexts.isEmpty(),
                        "At least one BoundedContext should be specified.");

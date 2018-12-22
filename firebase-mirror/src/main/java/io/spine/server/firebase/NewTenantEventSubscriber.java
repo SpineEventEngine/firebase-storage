@@ -22,6 +22,7 @@ package io.spine.server.firebase;
 
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
+import io.spine.server.event.AbstractEventSubscriber;
 import io.spine.server.event.EventSubscriber;
 import io.spine.server.tenant.TenantAdded;
 
@@ -40,7 +41,7 @@ import static com.google.common.collect.Sets.newConcurrentHashSet;
  *
  * @author Dmytro Dashenkov
  */
-final class NewTenantEventSubscriber extends EventSubscriber {
+final class NewTenantEventSubscriber extends AbstractEventSubscriber {
 
     /**
      * Stores the IDs of tenants, which are already known to this instance of
