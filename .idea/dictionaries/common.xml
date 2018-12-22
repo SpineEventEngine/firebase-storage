@@ -17,9 +17,11 @@
       <w>escaper</w>
       <w>flushables</w>
       <w>googleapis</w>
-      <w>grpc</w>
+      <w>gradle</w>
+      <w>grpc</w>                                           
       <w>handshaker</w>
       <w>hohpe</w>
+      <w>idempotency</w>
       <w>lempira</w>
       <w>liskov</w>
       <w>melnik</w>
@@ -48,6 +50,7 @@
       <w>switchman</w>
       <w>testutil</w>
       <w>threeten</w>
+      <w>tuples</w>
       <w>unregister</w>
       <w>unregistering</w>
       <w>unregisters</w>
