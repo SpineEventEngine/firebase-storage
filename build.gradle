@@ -20,7 +20,7 @@
 
 
 buildscript {
-    apply from: 'ext.gradle'
+    apply from: 'version.gradle'
 
     ext {
         spineRepository = 'http://maven.teamdev.com/repository/spine'
@@ -56,7 +56,7 @@ ext {
 }
 
 allprojects {
-    apply from: "$rootDir/ext.gradle"
+    apply from: "$rootDir/version.gradle"
     apply plugin: 'java'
     apply plugin: 'jacoco'
     apply plugin: 'idea'
