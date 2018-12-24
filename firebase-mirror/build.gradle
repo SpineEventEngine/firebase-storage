@@ -25,6 +25,5 @@ ext {
 dependencies {
     implementation deps.build.firebaseAdmin
     testImplementation deps.test.guavaTestlib
-    testImplementation "io.spine:spine-testutil-server:$spineVersion"
-    testCompile "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
+    testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
 }

@@ -94,7 +94,7 @@ subprojects {
         implementation deps.build.guava
 
         testImplementation deps.test.hamcrest
-        testImplementation "io.spine:spine-testutil-server:$spineVersion"
+        testImplementation "io.spine:spine-testutil-server:1.0.0-SNAPSHOT"
         testImplementation deps.test.guavaTestlib
         testImplementation deps.test.slf4j
     }
