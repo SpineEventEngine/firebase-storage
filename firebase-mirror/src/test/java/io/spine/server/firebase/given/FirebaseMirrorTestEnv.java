@@ -30,6 +30,8 @@ import com.google.protobuf.Duration;
 import com.google.protobuf.Message;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
+import io.spine.base.CommandMessage;
+import io.spine.base.Time;
 import io.spine.client.ActorRequestFactory;
 import io.spine.client.CommandFactory;
 import io.spine.core.BoundedContextName;
@@ -43,11 +45,9 @@ import io.spine.core.UserId;
 import io.spine.people.PersonName;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
-import io.spine.server.aggregate.AggregateMessageDispatcher;
 import io.spine.server.aggregate.AggregateRepository;
 import io.spine.server.aggregate.Apply;
 import io.spine.server.command.Assign;
-import io.spine.server.command.TestEventFactory;
 import io.spine.server.entity.Entity;
 import io.spine.server.entity.Repository;
 import io.spine.server.firebase.FMChangeCustomerName;
@@ -67,7 +67,8 @@ import io.spine.server.stand.Stand;
 import io.spine.server.storage.StorageFactory;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
-import io.spine.time.Time;
+import io.spine.testing.server.TestEventFactory;
+import io.spine.testing.server.aggregate.AggregateMessageDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,11 +79,11 @@ import java.text.ParseException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Suppliers.ofInstance;
-import static io.spine.Identifier.newUuid;
-import static io.spine.client.TestActorRequestFactory.newInstance;
-import static io.spine.server.BoundedContext.newName;
-import static io.spine.server.projection.ProjectionEventDispatcher.dispatch;
+import static io.spine.base.Identifier.newUuid;
+import static io.spine.core.BoundedContextNames.newName;
 import static io.spine.server.storage.memory.InMemoryStorageFactory.newInstance;
+import static io.spine.testing.client.TestActorRequestFactory.newInstance;
+import static io.spine.testing.server.projection.ProjectionEventDispatcher.dispatch;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
 
@@ -233,7 +234,7 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static void dispatchCommand(Aggregate<?, ?, ?> aggregate,
-                                        Message command,
+                                        CommandMessage command,
                                         CommandFactory factory) {
         final Command cmd = factory.create(command);
         final CommandEnvelope envelope = CommandEnvelope.of(cmd);
@@ -244,7 +245,7 @@ public final class FirebaseMirrorTestEnv {
     createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
         @SuppressWarnings("unchecked") final Repository<I, E> repository =
                 boundedContext.findRepository(stateClass)
-                              .orNull();
+                              .orElse(null);
         assertNotNull(repository);
         final E projection = repository.create(id);
         return projection;

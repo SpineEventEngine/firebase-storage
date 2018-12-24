@@ -40,10 +40,14 @@ public class SubscriptionUpdateObserverShould {
     public void ignore_error() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         final String testMessage = SubscriptionUpdateObserverShould.class.getSimpleName();
+        EntityAlreadyArchived rejection = EntityAlreadyArchived
+                .newBuilder()
+                .setEntityId(toAny(testMessage))
+                .build();
         observer.onError(new IllegalArgumentException(testMessage)); // Unchecked exception.
         observer.onError(new IOException(testMessage)); // Checked exception.
         observer.onError(new OutOfMemoryError(testMessage)); // JVM error.
-        observer.onError(new EntityAlreadyArchived(toAny(testMessage))); // Rejection throwable.
+        observer.onError(rejection); // Rejection throwable.
     }
 
     @Test

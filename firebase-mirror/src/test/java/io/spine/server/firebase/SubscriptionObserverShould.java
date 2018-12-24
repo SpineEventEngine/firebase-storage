@@ -22,7 +22,7 @@ package io.spine.server.firebase;
 
 import com.google.common.testing.NullPointerTester;
 import io.grpc.stub.StreamObserver;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.Subscription;
 import io.spine.client.SubscriptionId;
 import io.spine.client.SubscriptionUpdate;

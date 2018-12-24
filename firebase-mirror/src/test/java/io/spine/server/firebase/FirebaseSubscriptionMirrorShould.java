@@ -33,7 +33,7 @@ import com.google.common.testing.NullPointerTester;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.ActorRequestFactory;
 import io.spine.client.Topic;
 import io.spine.core.Ack;
@@ -46,12 +46,12 @@ import io.spine.net.EmailAddress;
 import io.spine.net.InternetDomain;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
-import io.spine.server.command.TestEventFactory;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import io.spine.server.integration.ExternalMessage;
 import io.spine.server.tenant.TenantAdded;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
+import io.spine.testing.server.TestEventFactory;
 import io.spine.type.TypeUrl;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -63,8 +63,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static io.spine.Identifier.newUuid;
-import static io.spine.client.TestActorRequestFactory.newInstance;
+import static io.spine.base.Identifier.newUuid;
 import static io.spine.protobuf.AnyPacker.pack;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.bytes;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.id;
@@ -72,6 +71,7 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createBounded
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createCustomer;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
+import static io.spine.testing.client.TestActorRequestFactory.newInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -225,7 +225,7 @@ public class FirebaseSubscriptionMirrorShould {
         final Stringifier<FMSessionId> stringifier =
                 StringifierRegistry.getInstance()
                                    .<FMSessionId>get(FMSessionId.class)
-                                   .orNull();
+                                   .orElse(null);
         assertNotNull(stringifier);
         final FMSessionId readId = stringifier.reverse().convert(actualId);
         assertEquals(sessionId, readId);
@@ -251,9 +251,10 @@ public class FirebaseSubscriptionMirrorShould {
         mirror.reflect(CUSTOMER_TYPE);
         final FMCustomerId customerId = newId();
         createCustomer(customerId, boundedContext, secondTenant);
-        final com.google.common.base.Optional<?> document = tryFindDocument(CUSTOMER_TYPE.getJavaClass(),
-                                                                            customerId,
-                                                                            inRoot());
+        final com.google.common.base.Optional<?> document =
+                tryFindDocument(CUSTOMER_TYPE.getMessageClass(),
+                                customerId,
+                                inRoot());
         assertFalse(document.isPresent());
     }
 
@@ -293,7 +294,7 @@ public class FirebaseSubscriptionMirrorShould {
         mirror.reflect(CUSTOMER_TYPE);
         final FMCustomerId customerId = newId();
         final FMCustomer expectedState = createCustomer(customerId, boundedContext);
-        final Topic topic = requestFactory.topic().allOf(CUSTOMER_TYPE.getJavaClass());
+        final Topic topic = requestFactory.topic().allOf(CUSTOMER_TYPE.getMessageClass());
         final DocumentReference expectedDocument = rule.apply(topic);
         final FMCustomer actualState = findCustomer(customerId, inDoc(expectedDocument));
         assertEquals(expectedState, actualState);

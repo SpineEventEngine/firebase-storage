@@ -25,7 +25,7 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
