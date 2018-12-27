@@ -23,7 +23,6 @@ package io.spine.server.firebase;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Message;
 import io.grpc.stub.StreamObserver;
@@ -44,10 +43,11 @@ import io.spine.server.integration.IntegrationBus;
 import io.spine.server.tenant.TenantAwareOperation;
 import io.spine.server.tenant.TenantIndex;
 import io.spine.type.TypeUrl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -58,7 +58,7 @@ import static com.google.common.collect.Sets.newHashSet;
 /**
  * A client of {@link SubscriptionService} that mirrors the received messages to Firebase.
  *
- * <h2>Usage</h2>
+ * <h1>Usage</h1>
  *
  * <p>{@code FirebaseSubscriptionMirror} reflects the received messages into the specified
  * <a target="_blank" href="https://firebase.google.com/docs/firestore/">Cloud Firestore^</a>
@@ -81,9 +81,9 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <a name="protocol"></a>
  *
- * <h2>Protocol</h2>
+ * <h1>Protocol</h1>
  *
- * <h3>Location</h3>
+ * <h2>Location</h2>
  *
  * <p>The mirror writes the received entity state updates to the given Firestore by the following
  * rules:
@@ -106,7 +106,7 @@ import static com.google.common.collect.Sets.newHashSet;
  * the mirror. Note that the {@code document-key} is not a valid {@code CustomerAggregate} ID.
  * Do NOT depend any business logic on its value.
  *
- * <h3>Document structure</h3>
+ * <h2>Document structure</h2>
  *
  * <p>The Firestore documents created by the mirror have the following structure:
  * <ul>
@@ -125,7 +125,7 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <a name="multitenancy"></a>
  *
- * <h2>Multitenancy</h2>
+ * <h1>Multitenancy</h1>
  *
  * <p>When working with multitenant {@code BoundedContext}s, reflecting is started for all
  * the tenants in the specified bounded contexts.
@@ -178,7 +178,6 @@ import static com.google.common.collect.Sets.newHashSet;
  * href="https://firebase.google.com/docs/firestore/data-model#subcollections">sub-collections^</a>
  * of the given document).
  *
- * @author Dmytro Dashenkov
  * @see SubscriptionService
  */
 public final class FirebaseSubscriptionMirror {
@@ -202,8 +201,7 @@ public final class FirebaseSubscriptionMirror {
      * <p>Only one of {@code firestore}, {@link #document}, of {@link #reflectionRule} should be
      * set for an instance of {@code FirebaseSubscriptionMirror}.
      */
-    @Nullable
-    private final Firestore firestore;
+    private final @Nullable Firestore firestore;
 
     /**
      * An instance of {@link DocumentReference} to store the data in.
@@ -213,8 +211,7 @@ public final class FirebaseSubscriptionMirror {
      * <p>Only one of {@link #firestore}, {@code document}, of {@link #reflectionRule} should be
      * set for an instance of {@code FirebaseSubscriptionMirror}.
      */
-    @Nullable
-    private final DocumentReference document;
+    private final @Nullable DocumentReference document;
 
     /**
      * A function mapping a {@link Topic} to a {@link DocumentReference} in which the records
@@ -225,8 +222,7 @@ public final class FirebaseSubscriptionMirror {
      * <p>Only one of {@link #firestore}, {@link #document}, of {@code reflectionRule} should be
      * set for an instance of {@code FirebaseSubscriptionMirror}.
      */
-    @Nullable
-    private final Function<Topic, DocumentReference> reflectionRule;
+    private final @Nullable Function<Topic, DocumentReference> reflectionRule;
 
     private final Set<TenantId> knownTenants;
     private final Set<Topic> subscriptionTopics;
@@ -249,7 +245,7 @@ public final class FirebaseSubscriptionMirror {
      *
      * @param contexts the bounded contexts to subscribe to the events from
      */
-    private void initEventSubscriber(Collection<BoundedContext> contexts) {
+    private void initEventSubscriber(Iterable<BoundedContext> contexts) {
         final AbstractEventSubscriber tenantEventSubscriber = createTenantEventSubscriber();
         registerEventSubscriber(contexts, tenantEventSubscriber);
     }
@@ -260,7 +256,7 @@ public final class FirebaseSubscriptionMirror {
         return result;
     }
 
-    private static void registerEventSubscriber(Collection<BoundedContext> contexts,
+    private static void registerEventSubscriber(Iterable<BoundedContext> contexts,
                                                 AbstractEventSubscriber eventSubscriber) {
         for (BoundedContext context : contexts) {
             final IntegrationBus integrationBus = context.getIntegrationBus();
@@ -372,10 +368,8 @@ public final class FirebaseSubscriptionMirror {
 
         private SubscriptionService subscriptionService;
 
-        @Nullable
-        private Firestore firestore;
-        @Nullable
-        private DocumentReference document;
+        private @Nullable Firestore firestore;
+        private @Nullable DocumentReference document;
 
         private Function<Topic, DocumentReference> reflectionRule;
 
@@ -498,7 +492,7 @@ public final class FirebaseSubscriptionMirror {
             return mirror;
         }
 
-        private static Collection<TenantId> getAllTenants(Collection<BoundedContext> contexts) {
+        private static Collection<TenantId> getAllTenants(Iterable<BoundedContext> contexts) {
             final Collection<TenantId> tenants = newLinkedList();
             for (BoundedContext context : contexts) {
                 final TenantIndex tenantIndex = context.getTenantIndex();

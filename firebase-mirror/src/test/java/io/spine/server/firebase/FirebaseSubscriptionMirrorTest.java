@@ -27,8 +27,6 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.WriteBatch;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.testing.NullPointerTester;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -36,12 +34,10 @@ import com.google.protobuf.Message;
 import io.spine.base.Identifier;
 import io.spine.client.ActorRequestFactory;
 import io.spine.client.Topic;
-import io.spine.core.Ack;
 import io.spine.core.ActorContext;
 import io.spine.core.BoundedContextName;
 import io.spine.core.Event;
 import io.spine.core.TenantId;
-import io.spine.grpc.StreamObservers;
 import io.spine.net.EmailAddress;
 import io.spine.net.InternetDomain;
 import io.spine.server.BoundedContext;
@@ -58,13 +54,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static io.spine.base.Identifier.newUuid;
+import static io.spine.grpc.StreamObservers.noOpObserver;
 import static io.spine.protobuf.AnyPacker.pack;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.bytes;
 import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.id;
@@ -107,7 +105,7 @@ class FirebaseSubscriptionMirrorTest {
      * <p>This field is declared {@code static} to make it accessible in {@link org.junit.AfterClass
      * \@AfterClass} methods for the test data clean up.
      */
-    private static Firestore firestore;
+    private static final Firestore firestore = getFirestore();
 
     private static final TypeUrl CUSTOMER_TYPE = TypeUrl.of(FMCustomer.class);
     private static final TypeUrl SESSION_TYPE = TypeUrl.of(FMSession.class);
@@ -141,7 +139,6 @@ class FirebaseSubscriptionMirrorTest {
 
     @BeforeEach
     void beforeEach() {
-        firestore = getFirestore();
         initializeEnvironment(false);
     }
 
@@ -161,6 +158,8 @@ class FirebaseSubscriptionMirrorTest {
                 .testAllPublicInstanceMethods(FirebaseSubscriptionMirror.newBuilder());
     }
 
+    @SuppressWarnings({"CheckReturnValue", "ResultOfMethodCallIgnored"})
+    // Method called to throw exception.
     @Test
     @DisplayName("accept either Firestore or DocumentReference on construction")
     void acceptFirestoreOrDocument() {
@@ -175,6 +174,8 @@ class FirebaseSubscriptionMirrorTest {
         assertThrows(IllegalStateException.class, builder::build);
     }
 
+    @SuppressWarnings({"CheckReturnValue", "ResultOfMethodCallIgnored"})
+    // Method called to throw exception.
     @Test
     @DisplayName("require at least one BoundedContext on construction")
     void requireBoundedContext() {
@@ -261,10 +262,10 @@ class FirebaseSubscriptionMirrorTest {
         mirror.reflect(CUSTOMER_TYPE);
         final FMCustomerId customerId = newId();
         createCustomer(customerId, boundedContext, secondTenant);
-        final com.google.common.base.Optional<?> document =
-                tryFindDocument(CUSTOMER_TYPE.getMessageClass(),
-                                customerId,
-                                inRoot());
+        Optional<DocumentSnapshot> document = tryFindDocument(
+                CUSTOMER_TYPE.getMessageClass(),
+                customerId,
+                inRoot());
         assertFalse(document.isPresent());
     }
 
@@ -290,13 +291,9 @@ class FirebaseSubscriptionMirrorTest {
     @DisplayName("allow to specify custom document per topic")
     void allowCustomDocumentPerTopic() throws ExecutionException,
                                                              InterruptedException {
-        final Function<Topic, DocumentReference> rule = new Function<Topic, DocumentReference>() {
-            @Override
-            public DocumentReference apply(@Nullable Topic topic) {
-                return firestore.collection("custom_subscription")
-                                .document("location");
-            }
-        };
+        Function<Topic, DocumentReference> rule =
+                topic -> firestore.collection("custom_subscription")
+                                  .document("location");
         final FirebaseSubscriptionMirror mirror =
                 FirebaseSubscriptionMirror.newBuilder()
                                           .setSubscriptionService(subscriptionService)
@@ -347,7 +344,7 @@ class FirebaseSubscriptionMirrorTest {
                                                                .setActorContext(actorContext)
                                                                .build();
         boundedContext.getIntegrationBus()
-                      .post(externalMessage, StreamObservers.<Ack>noOpObserver());
+                      .post(externalMessage, noOpObserver());
     }
 
     private void initializeEnvironment(boolean multitenant) {
@@ -428,7 +425,7 @@ class FirebaseSubscriptionMirrorTest {
         final String collectionName = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
         final QuerySnapshot collection = collectionAccess.apply(collectionName)
                                                          .get().get();
-        Optional<DocumentSnapshot> result = Optional.absent();
+        Optional<DocumentSnapshot> result = Optional.empty();
         for (DocumentSnapshot doc : collection.getDocuments()) {
             documents.add(doc.getReference());
             if (idEquals(doc, id)) {
@@ -457,24 +454,10 @@ class FirebaseSubscriptionMirrorTest {
     }
 
     private static Function<String, CollectionReference> inRoot() {
-        return new Function<String, CollectionReference>() {
-            @Override
-            public CollectionReference apply(@Nullable String path) {
-                assertNotNull(path);
-                final CollectionReference result = firestore.collection(path);
-                return result;
-            }
-        };
+        return firestore::collection;
     }
 
     private static Function<String, CollectionReference> inDoc(final DocumentReference doc) {
-        return new Function<String, CollectionReference>() {
-            @Override
-            public CollectionReference apply(@Nullable String path) {
-                assertNotNull(path);
-                final CollectionReference result = doc.collection(path);
-                return result;
-            }
-        };
+        return doc::collection;
     }
 }

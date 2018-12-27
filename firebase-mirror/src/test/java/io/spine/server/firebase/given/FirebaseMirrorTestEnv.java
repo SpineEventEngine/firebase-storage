@@ -22,7 +22,7 @@ package io.spine.server.firebase.given;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
-import com.google.common.base.Supplier;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
@@ -76,9 +76,9 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Suppliers.ofInstance;
 import static io.spine.base.Identifier.newUuid;
 import static io.spine.core.BoundedContextNames.newName;
 import static io.spine.server.storage.memory.InMemoryStorageFactory.newInstance;
@@ -89,9 +89,8 @@ import static org.junit.Assume.assumeNotNull;
 
 /**
  * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
- *
- * @author Dmytro Dashenkov
  */
+@SuppressWarnings("unused") // A lot of methods with reflective access only.
 public final class FirebaseMirrorTestEnv {
 
     private static final String FIREBASE_SERVICE_ACC_SECRET = "serviceAccount.json";
@@ -210,6 +209,7 @@ public final class FirebaseMirrorTestEnv {
         stand.post(defaultTenant(), projection);
     }
 
+    @CanIgnoreReturnValue
     public static FMCustomer createCustomer(FMCustomerId customerId,
                                             BoundedContext boundedContext,
                                             TenantId tenantId) {
@@ -291,7 +291,7 @@ public final class FirebaseMirrorTestEnv {
     public static BoundedContext createBoundedContext(String name, boolean multitenant) {
         final BoundedContextName contextName = newName(name);
         final StorageFactory storageFactory = newInstance(contextName, multitenant);
-        final Supplier<StorageFactory> storageSupplier = ofInstance(storageFactory);
+        final Supplier<StorageFactory> storageSupplier = () -> storageFactory;
         final BoundedContext result = BoundedContext.newBuilder()
                                                     .setName(name)
                                                     .setMultitenant(multitenant)
@@ -309,13 +309,11 @@ public final class FirebaseMirrorTestEnv {
             super(id);
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Assign
         FMCustomerCreated handle(FMCreateCustomer command) {
             return createdEvent(command.getId());
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Assign
         FMCustomerNameChanged handle(FMChangeCustomerName command) {
             return FMCustomerNameChanged.newBuilder()
@@ -323,20 +321,18 @@ public final class FirebaseMirrorTestEnv {
                                         .build();
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Apply
         private void on(FMCustomerCreated event) {
             getBuilder().setId(event.getId());
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Apply
         private void on(FMCustomerNameChanged event) {
             getBuilder().setName(event.getNewName());
         }
     }
 
-    static class CustomerRepository
+    private static class CustomerRepository
             extends AggregateRepository<FMCustomerId, CustomerAggregate> {}
 
     public static class SessionProjection
@@ -346,7 +342,6 @@ public final class FirebaseMirrorTestEnv {
             super(id);
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Subscribe
         void on(FMCustomerCreated event, EventContext context) {
             getBuilder().setDuration(mockLogic(context));
@@ -363,7 +358,7 @@ public final class FirebaseMirrorTestEnv {
         }
     }
 
-    static class SessionRepository
+    private static class SessionRepository
             extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {}
 
     private static Logger log() {
