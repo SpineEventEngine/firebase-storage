@@ -126,9 +126,9 @@ subprojects {
 
     idea {
         module {
-            sourceDirs += file(generatedJavaDir);
-            sourceDirs += file(generatedGrpcDir);
-            sourceDirs += file(generatedSpineDir);
+            sourceDirs += file(generatedJavaDir)
+            sourceDirs += file(generatedGrpcDir)
+            sourceDirs += file(generatedSpineDir)
 
             testSourceDirs += file(generatedTestJavaDir)
             testSourceDirs += file(generatedTestGrpcDir)
@@ -136,10 +136,10 @@ subprojects {
     }
 
     idea.module.iml {
-        beforeMerged { module ->
+        beforeMerged { final module ->
             module.dependencies.clear()
         }
-        whenMerged { module ->
+        whenMerged { final module ->
             module.dependencies*.exported = true
         }
     }
