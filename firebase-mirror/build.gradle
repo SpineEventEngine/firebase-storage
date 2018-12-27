@@ -19,7 +19,7 @@
  */
 
 ext {
-    nettyBoringsslVersion = '2.0.6.Final'
+    nettyBoringsslVersion = '2.0.20.Final'
 }
 
 dependencies {
