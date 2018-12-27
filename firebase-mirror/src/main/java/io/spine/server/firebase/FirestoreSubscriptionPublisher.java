@@ -20,7 +20,6 @@
 
 package io.spine.server.firebase;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.WriteBatch;
@@ -36,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static com.google.cloud.firestore.Blob.fromBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,8 +46,6 @@ import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStat
 /**
  * Publishes {@link EntityStateUpdate}s to <a target="_blank"
  * href="https://firebase.google.com/docs/firestore/">Cloud Firestore^</a>.
- *
- * @author Dmytro Dashenkov
  */
 final class FirestoreSubscriptionPublisher {
 
@@ -74,7 +72,7 @@ final class FirestoreSubscriptionPublisher {
         for (EntityStateUpdate update : updates) {
             write(batch, update);
         }
-        final ApiFuture<?> writeResult = batch.commit();
+        final Future<?> writeResult = batch.commit();
         waitFor(writeResult);
     }
 
@@ -102,12 +100,12 @@ final class FirestoreSubscriptionPublisher {
     }
 
     /**
-     * Blocks the current thread waiting for the given {@link ApiFuture} and logs all the caught
+     * Blocks the current thread waiting for the given {@link Future} and logs all the caught
      * exceptions.
      *
      * @param future the future to wait for
      */
-    private static void waitFor(ApiFuture<?> future) {
+    private static void waitFor(Future<?> future) {
         try {
             future.get();
         } catch (InterruptedException | ExecutionException e) {
