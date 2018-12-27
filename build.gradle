@@ -99,6 +99,16 @@ subprojects {
         testImplementation "io.spine:spine-testutil-server:1.0.0-SNAPSHOT"
         testImplementation deps.test.guavaTestlib
         testImplementation deps.test.slf4j
+        testImplementation deps.test.junit5Api
+        testImplementation deps.test.junit5Runner
+    }
+
+    test {
+        useJUnitPlatform {
+            includeEngines 'junit-jupiter'
+        }
+
+        include "**/*Test.class"
     }
 
     sourceSets {

@@ -20,23 +20,28 @@
 
 package io.spine.server.firebase;
 
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
+import static io.spine.testing.DisplayNames.HAVE_PARAMETERLESS_CTOR;
 import static io.spine.testing.Tests.assertHasPrivateParameterlessCtor;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class DocumentKeysShould {
+@DisplayName("DocumentKeys utility should")
+class DocumentKeysTest {
 
     @Test
-    public void have_util_ctor() {
+    @DisplayName(HAVE_PARAMETERLESS_CTOR)
+    void haveUtilityCtor() {
         assertHasPrivateParameterlessCtor(DocumentKeys.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void throw_IAE_on_invalid_key() {
+    @SuppressWarnings({"CheckReturnValue", "ResultOfMethodCallIgnored"})
+    // Method called to throw exception.
+    @Test
+    @DisplayName("throw IAE on invalid key")
+    void throwOnInvalidKey() {
         final String invalidKey = "#@)?$";
-        DocumentKeys.escape(invalidKey);
+        assertThrows(IllegalArgumentException.class, () -> DocumentKeys.escape(invalidKey));
     }
 }

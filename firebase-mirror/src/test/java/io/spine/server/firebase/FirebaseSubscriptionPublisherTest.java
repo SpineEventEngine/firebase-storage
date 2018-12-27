@@ -29,7 +29,8 @@ import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 
@@ -39,15 +40,14 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class FirebaseSubscriptionPublisherShould {
+@DisplayName("FirebaseSubscriptionPublisher should")
+class FirebaseSubscriptionPublisherTest {
 
     @Test
-    public void escape_illegal_chars_in_a_document_key() throws ExecutionException,
-                                                                InterruptedException,
-                                                                InvalidProtocolBufferException {
+    @DisplayName("escape illegal chars in a document key")
+    void escapeIllegalDocumentKey() throws ExecutionException,
+                                           InterruptedException,
+                                           InvalidProtocolBufferException {
         final CollectionReference targetCollection = getFirestore().collection("test_records");
         final FirestoreSubscriptionPublisher publisher =
                 new FirestoreSubscriptionPublisher(targetCollection);

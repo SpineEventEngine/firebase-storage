@@ -24,22 +24,38 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.common.testing.NullPointerTester;
 import io.grpc.stub.StreamObserver;
 import io.spine.server.entity.rejection.EntityAlreadyArchived;
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static io.spine.protobuf.TypeConverter.toAny;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
+import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class SubscriptionUpdateObserverShould {
+@DisplayName("SubscriptionUpdateObserver should")
+class SubscriptionUpdateObserverTest {
 
     @Test
-    public void ignore_error() {
+    @DisplayName(NOT_ACCEPT_NULLS)
+    void passNullToleranceCheck() throws NoSuchMethodException {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
-        final String testMessage = SubscriptionUpdateObserverShould.class.getSimpleName();
+        new NullPointerTester()
+                .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
+                .testAllPublicInstanceMethods(observer);
+    }
+
+    @Test
+    @DisplayName("not accept nulls on construction")
+    void rejectNullsOnConstruction() {
+        new NullPointerTester().testAllPublicConstructors(SubscriptionUpdateObserver.class);
+    }
+
+    @Test
+    @DisplayName("ignore error")
+    void ignoreError() {
+        final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        final String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
         EntityAlreadyArchived rejection = EntityAlreadyArchived
                 .newBuilder()
                 .setEntityId(toAny(testMessage))
@@ -51,23 +67,11 @@ public class SubscriptionUpdateObserverShould {
     }
 
     @Test
-    public void ignore_completion() {
+    @DisplayName("ignore completion")
+    void ignoreCompletion() {
         final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         observer.onCompleted();
         observer.onCompleted();
-    }
-
-    @Test
-    public void not_accept_nulls_on_construction() {
-        new NullPointerTester().testAllPublicConstructors(SubscriptionUpdateObserver.class);
-    }
-
-    @Test
-    public void not_accept_null_arguments() throws NoSuchMethodException {
-        final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
-        new NullPointerTester()
-                .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
-                .testAllPublicInstanceMethods(observer);
     }
 
     private static CollectionReference target() {

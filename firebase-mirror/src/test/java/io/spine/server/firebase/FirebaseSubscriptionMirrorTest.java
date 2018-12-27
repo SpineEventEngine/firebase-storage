@@ -53,9 +53,10 @@ import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
 import io.spine.testing.server.TestEventFactory;
 import io.spine.type.TypeUrl;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -71,11 +72,13 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createBounded
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createCustomer;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
+import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 import static io.spine.testing.client.TestActorRequestFactory.newInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -90,11 +93,10 @@ import static org.mockito.Mockito.verify;
  * <p>To run the tests locally, go to the Firebase console, create a new service account and save
  * the generated {@code .json} file as
  * {@code firebase-mirror/src/test/resources/serviceAccount.json}. Then run the tests from IDE.
- *
- * @author Dmytro Dashenkov
  */
 @SuppressWarnings("ClassWithTooManyMethods")
-public class FirebaseSubscriptionMirrorShould {
+@DisplayName("FirebaseSubscriptionMirror should")
+class FirebaseSubscriptionMirrorTest {
 
     /**
      * The {@link Firestore} instance to access from the mirror.
@@ -111,7 +113,7 @@ public class FirebaseSubscriptionMirrorShould {
     private static final TypeUrl SESSION_TYPE = TypeUrl.of(FMSession.class);
 
     private final ActorRequestFactory requestFactory =
-            newInstance(FirebaseSubscriptionMirrorShould.class);
+            newInstance(FirebaseSubscriptionMirrorTest.class);
     private FirebaseSubscriptionMirror mirror;
     private BoundedContext boundedContext;
     private SubscriptionService subscriptionService;
@@ -123,10 +125,10 @@ public class FirebaseSubscriptionMirrorShould {
      */
     private static final Collection<DocumentReference> documents = newHashSet();
     private final TestEventFactory eventFactory =
-            TestEventFactory.newInstance(FirebaseSubscriptionMirrorShould.class);
+            TestEventFactory.newInstance(FirebaseSubscriptionMirrorTest.class);
 
-    @AfterClass
-    public static void afterAll() throws ExecutionException, InterruptedException {
+    @AfterAll
+    static void afterAll() throws ExecutionException, InterruptedException {
         final WriteBatch batch = getFirestore().batch();
         for (DocumentReference document : documents) {
             batch.delete(document);
@@ -137,28 +139,31 @@ public class FirebaseSubscriptionMirrorShould {
         documents.clear();
     }
 
-    @Before
-    public void beforeEach() {
+    @BeforeEach
+    void beforeEach() {
         firestore = getFirestore();
         initializeEnvironment(false);
     }
 
     @Test
-    public void not_allow_nulls_on_construction() {
-        new NullPointerTester()
-                .testAllPublicInstanceMethods(FirebaseSubscriptionMirror.newBuilder());
-    }
-
-    @Test
-    public void not_allow_null_arguments() {
+    @DisplayName(NOT_ACCEPT_NULLS)
+    void passNullToleranceCheck() {
         new NullPointerTester()
                 .setDefault(TenantId.class, TenantId.getDefaultInstance())
                 .setDefault(Topic.class, Topic.getDefaultInstance())
                 .testAllPublicInstanceMethods(mirror);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void accept_only_one_of_Firestore_or_DocumentReference_on_construction() {
+    @Test
+    @DisplayName("not allow nulls on construction")
+    void rejectNullsOnConstruction() {
+        new NullPointerTester()
+                .testAllPublicInstanceMethods(FirebaseSubscriptionMirror.newBuilder());
+    }
+
+    @Test
+    @DisplayName("accept either Firestore or DocumentReference on construction")
+    void acceptFirestoreOrDocument() {
         final DocumentReference location = firestore.collection("test_collection")
                                                     .document("test_document");
         final FirebaseSubscriptionMirror.Builder builder =
@@ -167,20 +172,22 @@ public class FirebaseSubscriptionMirrorShould {
                                           .setFirestore(firestore)
                                           .addBoundedContext(boundedContext)
                                           .setFirestoreDocument(location);
-        builder.build();
+        assertThrows(IllegalStateException.class, builder::build);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void require_at_least_one_BoundedContext_on_construction() {
+    @Test
+    @DisplayName("require at least one BoundedContext on construction")
+    void requireBoundedContext() {
         final FirebaseSubscriptionMirror.Builder builder =
                 FirebaseSubscriptionMirror.newBuilder()
                                           .setSubscriptionService(subscriptionService)
                                           .setFirestore(firestore);
-        builder.build();
+        assertThrows(IllegalStateException.class, builder::build);
     }
 
     @Test
-    public void allow_not_to_specify_a_SubscriptionService() {
+    @DisplayName("allow not specifying a SubscriptionService")
+    void allowNoSubscriptionService() {
         final FirebaseSubscriptionMirror mirror =
                 FirebaseSubscriptionMirror.newBuilder()
                                           .addBoundedContext(boundedContext)
@@ -190,7 +197,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void allow_to_specify_a_custom_SubscriptionService() {
+    @DisplayName("allow to specify a custom SubscriptionService")
+    void allowCustomSubscriptionService() {
         final SubscriptionService spy = spy(subscriptionService);
         final FirebaseSubscriptionMirror mirror =
                 FirebaseSubscriptionMirror.newBuilder()
@@ -203,7 +211,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void deliver_the_entity_state_updates() throws ExecutionException, InterruptedException {
+    @DisplayName("deliver the entity state updates")
+    void deliverTheEntityStateUpdates() throws ExecutionException, InterruptedException {
         mirror.reflect(CUSTOMER_TYPE);
         final FMCustomerId customerId = newId();
         final FMCustomer expectedState = createCustomer(customerId, boundedContext);
@@ -212,8 +221,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void transform_ID_to_string_with_the_proper_Stringifier() throws ExecutionException,
-                                                                     InterruptedException {
+    @DisplayName("transform ID to string with the proper Stringifier")
+    void transformIDToString() throws ExecutionException, InterruptedException {
         FirebaseMirrorTestEnv.registerSessionIdStringifier();
         mirror.reflect(SESSION_TYPE);
         final FMSessionId sessionId = FirebaseMirrorTestEnv.newSessionId();
@@ -232,7 +241,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void partition_records_of_different_tenants() throws ExecutionException, InterruptedException {
+    @DisplayName("partition records of different tenants")
+    void partitionRecords() throws ExecutionException, InterruptedException {
         initializeEnvironment(true);
         final InternetDomain tenantDomain = InternetDomain.newBuilder()
                                                           .setValue("example.org")
@@ -259,7 +269,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void allow_to_specify_a_custom_document_to_work_with() throws ExecutionException,
+    @DisplayName("allow to specify a custom document to work with")
+    void allowCustomDocument() throws ExecutionException,
                                                                   InterruptedException {
         final DocumentReference customLocation = firestore.document("custom/location");
         final FirebaseSubscriptionMirror mirror =
@@ -276,7 +287,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void allow_to_specify_custom_document_per_topic() throws ExecutionException,
+    @DisplayName("allow to specify custom document per topic")
+    void allowCustomDocumentPerTopic() throws ExecutionException,
                                                              InterruptedException {
         final Function<Topic, DocumentReference> rule = new Function<Topic, DocumentReference>() {
             @Override
@@ -301,8 +313,8 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     @Test
-    public void starts_reflecting_for_newly_created_tenants() throws ExecutionException,
-                                                              InterruptedException {
+    @DisplayName("start reflecting for newly created tenants")
+    void reflectForNewTenants() throws ExecutionException, InterruptedException {
         initializeEnvironment(true);
         mirror.reflect(CUSTOMER_TYPE);
         assertTrue(boundedContext.getTenantIndex()
@@ -339,7 +351,7 @@ public class FirebaseSubscriptionMirrorShould {
     }
 
     private void initializeEnvironment(boolean multitenant) {
-        final String name = FirebaseSubscriptionMirrorShould.class.getSimpleName();
+        final String name = FirebaseSubscriptionMirrorTest.class.getSimpleName();
         boundedContext = createBoundedContext(name, multitenant);
         subscriptionService = SubscriptionService.newBuilder()
                                                  .add(boundedContext)
