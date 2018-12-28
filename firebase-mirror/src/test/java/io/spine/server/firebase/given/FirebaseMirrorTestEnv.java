@@ -344,7 +344,8 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static class CustomerRepository
-            extends AggregateRepository<FMCustomerId, CustomerAggregate> {}
+            extends AggregateRepository<FMCustomerId, CustomerAggregate> {
+    }
 
     public static class SessionProjection
             extends Projection<FMSessionId, FMSession, FMSessionVBuilder> {
@@ -371,7 +372,8 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static class SessionRepository
-            extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {}
+            extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {
+    }
 
     private static Logger log() {
         return Logging.get(FirebaseMirrorTestEnv.class);

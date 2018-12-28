@@ -39,7 +39,8 @@ final class DocumentKeys {
     /**
      * The {@code private} constructor prevents the utility class instantiation.
      */
-    private DocumentKeys() {}
+    private DocumentKeys() {
+    }
 
     /**
      * Transforms the given string to a <a target="_blank"

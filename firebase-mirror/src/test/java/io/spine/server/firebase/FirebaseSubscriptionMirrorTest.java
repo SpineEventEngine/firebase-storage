@@ -237,7 +237,8 @@ class FirebaseSubscriptionMirrorTest {
                                    .<FMSessionId>get(FMSessionId.class)
                                    .orElse(null);
         assertNotNull(stringifier);
-        FMSessionId readId = stringifier.reverse().convert(actualId);
+        FMSessionId readId = stringifier.reverse()
+                                        .convert(actualId);
         assertEquals(sessionId, readId);
     }
 
@@ -276,7 +277,7 @@ class FirebaseSubscriptionMirrorTest {
     @Test
     @DisplayName("allow to specify a custom document to work with")
     void allowCustomDocument() throws ExecutionException,
-                                                                  InterruptedException {
+                                      InterruptedException {
         DocumentReference customLocation = firestore.document("custom/location");
         FirebaseSubscriptionMirror mirror = FirebaseSubscriptionMirror
                 .newBuilder()
@@ -294,7 +295,7 @@ class FirebaseSubscriptionMirrorTest {
     @Test
     @DisplayName("allow to specify custom document per topic")
     void allowCustomDocumentPerTopic() throws ExecutionException,
-                                                             InterruptedException {
+                                              InterruptedException {
         Function<Topic, DocumentReference> rule =
                 topic -> firestore.collection("custom_subscription")
                                   .document("location");
@@ -307,7 +308,8 @@ class FirebaseSubscriptionMirrorTest {
         mirror.reflect(CUSTOMER_TYPE);
         FMCustomerId customerId = newId();
         FMCustomer expectedState = createCustomer(customerId, boundedContext);
-        Topic topic = requestFactory.topic().allOf(CUSTOMER_TYPE.getMessageClass());
+        Topic topic = requestFactory.topic()
+                                    .allOf(CUSTOMER_TYPE.getMessageClass());
         DocumentReference expectedDocument = rule.apply(topic);
         FMCustomer actualState = findCustomer(customerId, inDoc(expectedDocument));
         assertEquals(expectedState, actualState);
@@ -436,7 +438,8 @@ class FirebaseSubscriptionMirrorTest {
         TypeUrl typeUrl = TypeUrl.of(msgClass);
         String collectionName = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
         QuerySnapshot collection = collectionAccess.apply(collectionName)
-                                                         .get().get();
+                                                   .get()
+                                                   .get();
         Optional<DocumentSnapshot> result = Optional.empty();
         for (DocumentSnapshot doc : collection.getDocuments()) {
             documents.add(doc.getReference());

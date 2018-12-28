@@ -68,5 +68,6 @@ final class SubscriptionObserver implements StreamObserver<Subscription> {
      * terminating steps are required.
      */
     @Override
-    public void onCompleted() {}
+    public void onCompleted() {
+    }
 }

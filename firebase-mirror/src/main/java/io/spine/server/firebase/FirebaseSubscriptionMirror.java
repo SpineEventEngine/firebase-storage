@@ -383,7 +383,8 @@ public final class FirebaseSubscriptionMirror {
         private Collection<TenantId> knownTenants;
 
         // Prevent direct instantiation.
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
          * Sets a {@link SubscriptionService} to use in the built mirror.
