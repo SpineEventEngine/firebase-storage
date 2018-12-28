@@ -114,18 +114,16 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static FMCustomerId newId() {
-        return FMCustomerId
-                .newBuilder()
-                .setUid(newUuid())
-                .build();
+        return FMCustomerId.newBuilder()
+                           .setUid(newUuid())
+                           .build();
     }
 
     public static FMSessionId newSessionId() {
-        return FMSessionId
-                .newBuilder()
-                .setCustomerId(newId())
-                .setStartTime(Time.getCurrentTime())
-                .build();
+        return FMSessionId.newBuilder()
+                          .setCustomerId(newId())
+                          .setStartTime(Time.getCurrentTime())
+                          .build();
     }
 
     public static Firestore getFirestore() {
@@ -180,19 +178,21 @@ public final class FirebaseMirrorTestEnv {
                 List<String> parts = Splitter.onPattern(SEPARATOR)
                                              .splitToList(stringId);
                 checkArgument(parts.size() == 2);
-                FMCustomerId customerId = FMCustomerId.newBuilder()
-                                                      .setUid(parts.get(0))
-                                                      .build();
+                FMCustomerId customerId = FMCustomerId
+                        .newBuilder()
+                        .setUid(parts.get(0))
+                        .build();
                 Timestamp timestamp;
                 try {
                     timestamp = Timestamps.parse(parts.get(1));
                 } catch (ParseException e) {
                     throw new IllegalArgumentException(e);
                 }
-                FMSessionId result = FMSessionId.newBuilder()
-                                                .setCustomerId(customerId)
-                                                .setStartTime(timestamp)
-                                                .build();
+                FMSessionId result = FMSessionId
+                        .newBuilder()
+                        .setCustomerId(customerId)
+                        .setStartTime(timestamp)
+                        .build();
                 return result;
             }
         };

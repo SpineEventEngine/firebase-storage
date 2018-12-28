@@ -134,17 +134,17 @@ import static com.google.common.collect.Sets.newHashSet;
  * {@link Builder#setReflectionRule(Function) reflection rule}:
  * <pre>
  *     {@code
- *     final CollectionReference root = // Dedicate a collection to all the subscriptions.
- *     final Function<Topic, Document> reflectionRule = topic -> {
+ *     CollectionReference root = // Dedicate a collection to all the subscriptions.
+ *     Function<Topic, Document> reflectionRule = topic -> {
  *         // Each tenant has own document.
  *         final String userId = topic.getContext().getTenant().getValue();
  *         return root.document(userId);
  *     };
- *     final FirebaseSubscriptionMirror mirror =
- *             FirebaseSubscriptionMirror.newBuilder()
- *                                       .setReflectionRule(reflectionRule)
- *                                       .addBoundedContext(myBoundedContext)
- *                                       .build();
+ *     FirebaseSubscriptionMirror mirror = FirebaseSubscriptionMirror
+ *             .newBuilder()
+ *             .setReflectionRule(reflectionRule)
+ *             .addBoundedContext(myBoundedContext)
+ *             .build();
  *     mirror.reflect(TypeUrl.of(MyEntity.class));
  *     }
  * </pre>
@@ -163,12 +163,12 @@ import static com.google.common.collect.Sets.newHashSet;
  * <p>If the destination document is predefined, it can be specified directly:
  * <pre>
  *     {@code
- *     final DocumentReference document = // Dedicate a document to all the subscriptions.
- *     final FirebaseSubscriptionMirror mirror =
- *             FirebaseSubscriptionMirror.newBuilder()
- *                                       .setFirestoreDocument(document)
- *                                       .addBoundedContext(myBoundedContext)
- *                                       .build();
+ *     DocumentReference document = // Dedicate a document to all the subscriptions.
+ *     FirebaseSubscriptionMirror mirror = FirebaseSubscriptionMirror
+ *             .newBuilder()
+ *             .setFirestoreDocument(document)
+ *             .addBoundedContext(myBoundedContext)
+ *             .build();
  *     mirror.reflect(TypeUrl.of(MyEntity.class));
  *     }
  * </pre>
