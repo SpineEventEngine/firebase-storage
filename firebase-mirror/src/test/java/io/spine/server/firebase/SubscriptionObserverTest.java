@@ -54,7 +54,7 @@ class SubscriptionObserverTest {
     @Test
     @DisplayName(NOT_ACCEPT_NULLS)
     void passNullToleranceCheck() throws NoSuchMethodException {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         new NullPointerTester()
                 .ignore(SubscriptionObserver.class.getMethod("onError", Throwable.class))
                 .testAllPublicInstanceMethods(observer);
@@ -72,10 +72,11 @@ class SubscriptionObserverTest {
     @Test
     @DisplayName("activate all subscriptions")
     void activateAllSubscriptions() {
-        final SubscriptionObserver observer = new SubscriptionObserver(service, updateObserver);
-        final Subscription subscription = Subscription.newBuilder()
-                                                      .setId(newSubscriptionId())
-                                                      .build();
+        SubscriptionObserver observer = new SubscriptionObserver(service, updateObserver);
+        Subscription subscription = Subscription
+                .newBuilder()
+                .setId(newSubscriptionId())
+                .build();
         observer.onNext(subscription);
         verify(service).activate(subscription, updateObserver);
     }
@@ -83,8 +84,8 @@ class SubscriptionObserverTest {
     @Test
     @DisplayName("throw ISE upon error")
     void throwISEUponError() {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
-        final Throwable throwable = new CustomThrowable();
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+        Throwable throwable = new CustomThrowable();
         try {
             observer.onError(throwable);
             fail("Exception not thrown");
@@ -96,7 +97,7 @@ class SubscriptionObserverTest {
     @Test
     @DisplayName("do nothing upon successful completion")
     void doNothingUponSuccess() {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         observer.onCompleted();
         observer.onCompleted();
     }

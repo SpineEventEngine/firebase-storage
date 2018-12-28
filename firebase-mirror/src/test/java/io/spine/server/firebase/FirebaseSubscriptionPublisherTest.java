@@ -49,30 +49,32 @@ class FirebaseSubscriptionPublisherTest {
     void escapeIllegalDocumentKey() throws ExecutionException,
                                            InterruptedException,
                                            InvalidProtocolBufferException {
-        final CollectionReference targetCollection = getFirestore().collection("test_records");
-        final FirestoreSubscriptionPublisher publisher =
+        CollectionReference targetCollection = getFirestore().collection("test_records");
+        FirestoreSubscriptionPublisher publisher =
                 new FirestoreSubscriptionPublisher(targetCollection);
-        final String rawId = "___&$id001%-_foobar";
-        final String expectedId = "id001_foobar";
-        final Any id = Identifier.pack(rawId);
-        final FMCustomer expectedState = FMCustomer.newBuilder()
-                                                   .setId(FirebaseMirrorTestEnv.newId())
-                                                   .build();
-        final Any state = pack(expectedState);
-        final EntityStateUpdate update = EntityStateUpdate.newBuilder()
-                                                          .setId(id)
-                                                          .setState(state)
-                                                          .build();
+        String rawId = "___&$id001%-_foobar";
+        String expectedId = "id001_foobar";
+        Any id = Identifier.pack(rawId);
+        FMCustomer expectedState = FMCustomer
+                .newBuilder()
+                .setId(FirebaseMirrorTestEnv.newId())
+                .build();
+        Any state = pack(expectedState);
+        EntityStateUpdate update = EntityStateUpdate
+                .newBuilder()
+                .setId(id)
+                .setState(state)
+                .build();
         publisher.publish(singleton(update));
-        final DocumentSnapshot document = targetCollection.document(expectedId)
-                                                          .get()
-                                                          .get();
-        final String entityStateId = document.getString(EntityStateField.id.toString());
+        DocumentSnapshot document = targetCollection.document(expectedId)
+                                                    .get()
+                                                    .get();
+        String entityStateId = document.getString(EntityStateField.id.toString());
         assertEquals(rawId, entityStateId);
 
-        final Blob stateBlob = document.getBlob(EntityStateField.bytes.toString());
+        Blob stateBlob = document.getBlob(EntityStateField.bytes.toString());
         assertNotNull(state);
-        final FMCustomer actualState = FMCustomer.parseFrom(stateBlob.toBytes());
+        FMCustomer actualState = FMCustomer.parseFrom(stateBlob.toBytes());
         assertEquals(expectedState, actualState);
 
         document.getReference()

@@ -39,7 +39,6 @@ import static java.lang.String.format;
  * {@linkplain StreamObserver#onCompleted() successful} or
  * {@linkplain StreamObserver#onError faulty} stream completion.
  *
- * @author Dmytro Dashenkov
  * @see FirestoreSubscriptionPublisher
  */
 final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpdate>, Logging {
@@ -55,7 +54,7 @@ final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpd
 
     @Override
     public void onNext(SubscriptionUpdate value) {
-        final Collection<EntityStateUpdate> payload = value.getEntityStateUpdatesList();
+        Collection<EntityStateUpdate> payload = value.getEntityStateUpdatesList();
         publisher.publish(payload);
     }
 

@@ -64,38 +64,40 @@ final class FirestoreSubscriptionPublisher {
      * <p>Each {@code EntityStateUpdate} causes either a new document creation or an existent
      * document update under the given {@code CollectionReference}.
      *
-     * @param updates updates to publish to the Firestore
+     * @param updates
+     *         updates to publish to the Firestore
      */
     void publish(Iterable<EntityStateUpdate> updates) {
         checkNotNull(updates);
-        final WriteBatch batch = collection.getFirestore().batch();
+        WriteBatch batch = collection.getFirestore()
+                                     .batch();
         for (EntityStateUpdate update : updates) {
             write(batch, update);
         }
-        final Future<?> writeResult = batch.commit();
+        Future<?> writeResult = batch.commit();
         waitFor(writeResult);
     }
 
     private void write(WriteBatch batch, EntityStateUpdate update) {
-        final Any updateId = update.getId();
-        final Any updateState = update.getState();
-        final Message entityId = unpack(updateId);
-        final Message message = unpack(updateState);
-        final String stringId = Identifier.toString(entityId);
-        final byte[] stateBytes = message.toByteArray();
-        final Map<String, Object> data = ImmutableMap.of(
+        Any updateId = update.getId();
+        Any updateState = update.getState();
+        Message entityId = unpack(updateId);
+        Message message = unpack(updateState);
+        String stringId = Identifier.toString(entityId);
+        byte[] stateBytes = message.toByteArray();
+        Map<String, Object> data = ImmutableMap.of(
                 bytes.toString(), fromBytes(stateBytes),
                 id.toString(), stringId
         );
-        final DocumentReference targetDocument = documentFor(stringId);
+        DocumentReference targetDocument = documentFor(stringId);
         log().info("Writing a state update of the type {} (id: {}) into the Firestore location {}.",
                    updateState.getTypeUrl(), stringId, targetDocument.getPath());
         batch.set(targetDocument, data);
     }
 
     private DocumentReference documentFor(String entityId) {
-        final String documentKey = DocumentKeys.escape(entityId);
-        final DocumentReference result = collection.document(documentKey);
+        String documentKey = DocumentKeys.escape(entityId);
+        DocumentReference result = collection.document(documentKey);
         return result;
     }
 
@@ -103,7 +105,8 @@ final class FirestoreSubscriptionPublisher {
      * Blocks the current thread waiting for the given {@link Future} and logs all the caught
      * exceptions.
      *
-     * @param future the future to wait for
+     * @param future
+     *         the future to wait for
      */
     private static void waitFor(Future<?> future) {
         try {

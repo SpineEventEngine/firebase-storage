@@ -183,12 +183,14 @@ import static com.google.common.collect.Sets.newHashSet;
 public final class FirebaseSubscriptionMirror {
 
     private static final String ACTOR_ID = FirebaseSubscriptionMirror.class.getSimpleName();
-    private static final UserId ACTOR = UserId.newBuilder()
-                                              .setValue(ACTOR_ID)
-                                              .build();
-    private static final ActorRequestFactory requestFactory = ActorRequestFactory.newBuilder()
-                                                                                 .setActor(ACTOR)
-                                                                                 .build();
+    private static final UserId ACTOR = UserId
+            .newBuilder()
+            .setValue(ACTOR_ID)
+            .build();
+    private static final ActorRequestFactory requestFactory = ActorRequestFactory
+            .newBuilder()
+            .setActor(ACTOR)
+            .build();
     private static final TopicFactory topics = requestFactory.topic();
 
     private final SubscriptionService subscriptionService;
@@ -243,23 +245,24 @@ public final class FirebaseSubscriptionMirror {
      * <p>This method is called in {@link Builder#build()} once after the constructor and should
      * not be called ever more.
      *
-     * @param contexts the bounded contexts to subscribe to the events from
+     * @param contexts
+     *         the bounded contexts to subscribe to the events from
      */
     private void initEventSubscriber(Iterable<BoundedContext> contexts) {
-        final AbstractEventSubscriber tenantEventSubscriber = createTenantEventSubscriber();
+        AbstractEventSubscriber tenantEventSubscriber = createTenantEventSubscriber();
         registerEventSubscriber(contexts, tenantEventSubscriber);
     }
 
     private AbstractEventSubscriber createTenantEventSubscriber() {
-        final TenantCallback tenantCallback = new ReflectExistingTopics();
-        final AbstractEventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
+        TenantCallback tenantCallback = new ReflectExistingTopics();
+        AbstractEventSubscriber result = new NewTenantEventSubscriber(tenantCallback);
         return result;
     }
 
     private static void registerEventSubscriber(Iterable<BoundedContext> contexts,
                                                 AbstractEventSubscriber eventSubscriber) {
         for (BoundedContext context : contexts) {
-            final IntegrationBus integrationBus = context.getIntegrationBus();
+            IntegrationBus integrationBus = context.getIntegrationBus();
             integrationBus.register(eventSubscriber);
         }
     }
@@ -273,12 +276,13 @@ public final class FirebaseSubscriptionMirror {
      *
      * <p>See <a href="#protocol">class level doc</a> for the description of the storage protocol.
      *
-     * @param type the type of the entities to reflect
+     * @param type
+     *         the type of the entities to reflect
      */
     public void reflect(TypeUrl type) {
         checkNotNull(type);
-        final Class<? extends Message> entityClass = type.getMessageClass();
-        final Topic topic = topics.allOf(entityClass);
+        Class<? extends Message> entityClass = type.getMessageClass();
+        Topic topic = topics.allOf(entityClass);
         subscriptionTopics.add(topic);
         for (TenantId knownTenant : knownTenants) {
             reflect(topic, knownTenant);
@@ -290,11 +294,13 @@ public final class FirebaseSubscriptionMirror {
      *
      * <p>Only the entity state updates of the given tenant will be reflected into Firebase.
      *
-     * @param topic    the topic to reflect
-     * @param tenantId the tenant whose entity updates will be reflected
+     * @param topic
+     *         the topic to reflect
+     * @param tenantId
+     *         the tenant whose entity updates will be reflected
      */
     private void reflect(Topic topic, TenantId tenantId) {
-        final Topic subscriptionTopic = forTenant(topic, tenantId);
+        Topic subscriptionTopic = forTenant(topic, tenantId);
         new TenantAwareOperation(tenantId) {
             @Override
             public void run() {
@@ -306,22 +312,23 @@ public final class FirebaseSubscriptionMirror {
     /**
      * Starts reflecting {@code topic} for the current tenant.
      *
-     * @param topic the topic to reflect
+     * @param topic
+     *         the topic to reflect
      */
     private void doReflect(Topic topic) {
-        final CollectionReference collectionReference = collection(topic);
-        final StreamObserver<SubscriptionUpdate> updateObserver =
+        CollectionReference collectionReference = collection(topic);
+        StreamObserver<SubscriptionUpdate> updateObserver =
                 new SubscriptionUpdateObserver(collectionReference);
-        final StreamObserver<Subscription> subscriptionObserver =
+        StreamObserver<Subscription> subscriptionObserver =
                 new SubscriptionObserver(subscriptionService, updateObserver);
         subscriptionService.subscribe(topic, subscriptionObserver);
     }
 
     private CollectionReference collection(Topic topic) {
-        final String collectionKey = toKey(topic.getTarget());
-        final CollectionReference result;
+        String collectionKey = toKey(topic.getTarget());
+        CollectionReference result;
         if (reflectionRule != null) {
-            final DocumentReference document = reflectionRule.apply(topic);
+            DocumentReference document = reflectionRule.apply(topic);
             result = document.collection(collectionKey);
         } else if (document != null) {
             result = document.collection(collectionKey);
@@ -333,19 +340,19 @@ public final class FirebaseSubscriptionMirror {
     }
 
     private static String toKey(Target target) {
-        final TypeUrl typeUrl = TypeUrl.parse(target.getType());
-        final String type = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
+        TypeUrl typeUrl = TypeUrl.parse(target.getType());
+        String type = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
         return type;
     }
 
     private static Topic forTenant(Topic topic, TenantId tenant) {
-        final ActorContext context = topic.getContext()
-                                          .toBuilder()
-                                          .setTenantId(tenant)
-                                          .build();
-        final Topic result = topic.toBuilder()
-                                  .setContext(context)
-                                  .build();
+        ActorContext context = topic.getContext()
+                                    .toBuilder()
+                                    .setTenantId(tenant)
+                                    .build();
+        Topic result = topic.toBuilder()
+                            .setContext(context)
+                            .build();
         return result;
     }
 
@@ -387,8 +394,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>If no {@code SubscriptionService} is specified, an instance is built with the passed
          * {@linkplain #addBoundedContext(BoundedContext) bounded contexts}.
          *
-         * @param subscriptionService the {@link SubscriptionService} to get the subscription
-         *                            updates from
+         * @param subscriptionService
+         *         the {@link SubscriptionService} to get the subscription updates from
          * @return self for method chaining
          */
         public Builder setSubscriptionService(SubscriptionService subscriptionService) {
@@ -405,7 +412,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>In case if this method is called, the generated by the mirror collections will be
          * located in the Firestore root.
          *
-         * @param database the {@link Firestore} to use
+         * @param database
+         *         the {@link Firestore} to use
          * @return self for method chaining
          * @see #setFirestoreDocument(DocumentReference)
          */
@@ -423,7 +431,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>In case if this method is called, the generated by the mirror collections will be
          * located under the specified document.
          *
-         * @param document the {@link DocumentReference} to write the data into
+         * @param document
+         *         the {@link DocumentReference} to write the data into
          * @return self for method chaining
          * @see #setFirestore(Firestore)
          */
@@ -442,7 +451,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>In case if this method is called, the generated by the mirror collections will be
          * distributed amongst the produced by the function documents.
          *
-         * @param reflectionRule the topic to document function
+         * @param reflectionRule
+         *         the topic to document function
          * @return self for method chaining
          */
         public Builder setReflectionRule(Function<Topic, DocumentReference> reflectionRule) {
@@ -456,7 +466,8 @@ public final class FirebaseSubscriptionMirror {
          *
          * <p>At least one {@code BoundedContext} should be specified to build a mirror.
          *
-         * @param boundedContext the {@link BoundedContext} to reflect entities from
+         * @param boundedContext
+         *         the {@link BoundedContext} to reflect entities from
          * @return self for method chaining
          */
         public Builder addBoundedContext(BoundedContext boundedContext) {
@@ -479,26 +490,26 @@ public final class FirebaseSubscriptionMirror {
                        "At least one BoundedContext should be specified.");
             checkLocationSettings();
             if (subscriptionService == null) {
-                final SubscriptionService.Builder builder = SubscriptionService.newBuilder();
+                SubscriptionService.Builder builder = SubscriptionService.newBuilder();
                 for (BoundedContext context : boundedContexts) {
                     builder.add(context);
                 }
                 subscriptionService = builder.build();
             }
-            final Collection<BoundedContext> contexts = ImmutableSet.copyOf(boundedContexts);
+            Collection<BoundedContext> contexts = ImmutableSet.copyOf(boundedContexts);
             this.knownTenants = getAllTenants(contexts);
-            final FirebaseSubscriptionMirror mirror = new FirebaseSubscriptionMirror(this);
+            FirebaseSubscriptionMirror mirror = new FirebaseSubscriptionMirror(this);
             mirror.initEventSubscriber(contexts);
             return mirror;
         }
 
         private static Collection<TenantId> getAllTenants(Iterable<BoundedContext> contexts) {
-            final Collection<TenantId> tenants = newLinkedList();
+            Collection<TenantId> tenants = newLinkedList();
             for (BoundedContext context : contexts) {
-                final TenantIndex tenantIndex = context.getTenantIndex();
+                TenantIndex tenantIndex = context.getTenantIndex();
                 tenants.addAll(tenantIndex.getAll());
             }
-            final ImmutableSet<TenantId> result = ImmutableSet.copyOf(tenants);
+            ImmutableSet<TenantId> result = ImmutableSet.copyOf(tenants);
             return result;
         }
 

@@ -41,7 +41,7 @@ class DocumentKeysTest {
     @Test
     @DisplayName("throw IAE on invalid key")
     void throwOnInvalidKey() {
-        final String invalidKey = "#@)?$";
+        String invalidKey = "#@)?$";
         assertThrows(IllegalArgumentException.class, () -> DocumentKeys.escape(invalidKey));
     }
 }

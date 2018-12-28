@@ -30,8 +30,6 @@ import static java.util.regex.Pattern.compile;
 
 /**
  * A utility for working with the Firestore document/collection keys.
- *
- * @author Dmytro Dashenkov
  */
 final class DocumentKeys {
 
@@ -53,20 +51,21 @@ final class DocumentKeys {
      * <p>All the illegal chars are deleted from the source string. If no characters are left after
      * this operation, an {@link IllegalArgumentException} is thrown.
      *
-     * @param originalKey the string to transform
+     * @param originalKey
+     *         the string to transform
      * @return a valid Firestore key
      */
     static String escape(String originalKey) {
-        final String trimmedKey = trimUnderscore(originalKey);
-        final String result = INVALID_KEY_CHARS.matcher(trimmedKey)
-                                               .replaceAll("");
+        String trimmedKey = trimUnderscore(originalKey);
+        String result = INVALID_KEY_CHARS.matcher(trimmedKey)
+                                         .replaceAll("");
         checkArgument(!result.isEmpty(), "Key `%s` is invalid.", originalKey);
         return result;
     }
 
     private static String trimUnderscore(String key) {
-        final CharMatcher matcher = is(INVALID_KEY_LEADING_CHAR);
-        final String trimmed = matcher.trimLeadingFrom(key);
+        CharMatcher matcher = is(INVALID_KEY_LEADING_CHAR);
+        String trimmed = matcher.trimLeadingFrom(key);
         return trimmed;
     }
 }

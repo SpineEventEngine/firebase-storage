@@ -39,7 +39,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName(NOT_ACCEPT_NULLS)
     void passNullToleranceCheck() throws NoSuchMethodException {
-        final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         new NullPointerTester()
                 .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
                 .testAllPublicInstanceMethods(observer);
@@ -54,8 +54,8 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName("ignore error")
     void ignoreError() {
-        final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
-        final String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
+        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
         EntityAlreadyArchived rejection = EntityAlreadyArchived
                 .newBuilder()
                 .setEntityId(toAny(testMessage))
@@ -69,7 +69,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName("ignore completion")
     void ignoreCompletion() {
-        final StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
         observer.onCompleted();
         observer.onCompleted();
     }

@@ -38,11 +38,11 @@ class NewTenantEventSubscriberTest {
     @Test
     @DisplayName("not trigger callback twice for same tenant")
     void notTriggerForSameTenant() {
-        final MemoizingTenantCallback callback = new MemoizingTenantCallback();
-        final NewTenantEventSubscriber subscriber = new NewTenantEventSubscriber(callback);
-        final TenantId theId = newId();
-        final TenantAdded event1 = event(theId);
-        final TenantAdded event2 = event(theId);
+        MemoizingTenantCallback callback = new MemoizingTenantCallback();
+        NewTenantEventSubscriber subscriber = new NewTenantEventSubscriber(callback);
+        TenantId theId = newId();
+        TenantAdded event1 = event(theId);
+        TenantAdded event2 = event(theId);
 
         subscriber.on(event1);
         subscriber.on(event1);
@@ -52,9 +52,10 @@ class NewTenantEventSubscriberTest {
     }
 
     private static TenantAdded event(TenantId tenantId) {
-        final TenantAdded event = TenantAdded.newBuilder()
-                                             .setId(tenantId)
-                                             .build();
+        TenantAdded event = TenantAdded
+                .newBuilder()
+                .setId(tenantId)
+                .build();
         return event;
     }
 

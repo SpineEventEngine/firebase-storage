@@ -38,8 +38,6 @@ import static com.google.common.collect.Sets.newConcurrentHashSet;
  * <p>Not all the events cause the callback invocation, but only those that introduce a new
  * ({@linkplain #knownTenants previously unknown} to this instance of
  * {@code NewTenantEventSubscriber}) tenant ID.
- *
- * @author Dmytro Dashenkov
  */
 final class NewTenantEventSubscriber extends AbstractEventSubscriber {
 
@@ -56,7 +54,8 @@ final class NewTenantEventSubscriber extends AbstractEventSubscriber {
     /**
      * Creates a new instance of {@code NewTenantEventSubscriber}.
      *
-     * @param tenantCallback the callback to be invoked when a new tenant emerges
+     * @param tenantCallback
+     *         the callback to be invoked when a new tenant emerges
      */
     NewTenantEventSubscriber(TenantCallback tenantCallback) {
         super();
@@ -65,7 +64,7 @@ final class NewTenantEventSubscriber extends AbstractEventSubscriber {
 
     @Subscribe(external = true)
     public void on(TenantAdded event) {
-        final TenantId tenantId = event.getId();
+        TenantId tenantId = event.getId();
         log().info("Received TenantAdded event. New tenant ID is: {}", tenantId);
         if (!knownTenants.contains(tenantId)) {
             knownTenants.add(tenantId);
@@ -83,7 +82,8 @@ final class NewTenantEventSubscriber extends AbstractEventSubscriber {
         /**
          * Reacts on a new tenant.
          *
-         * @param tenantId the new tenant ID
+         * @param tenantId
+         *         the new tenant ID
          */
         void onTenant(TenantId tenantId);
     }
