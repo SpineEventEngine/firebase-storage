@@ -29,9 +29,9 @@ import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
+import io.spine.logging.Logging;
 import io.spine.server.storage.StorageField;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -138,13 +138,6 @@ final class FirestoreSubscriptionPublisher {
     }
 
     private static Logger log() {
-        return LogSingleton.INSTANCE.value;
-    }
-
-    private enum LogSingleton {
-        INSTANCE;
-        @SuppressWarnings("NonSerializableFieldInSerializableClass")
-        private final Logger value =
-                LoggerFactory.getLogger(FirestoreSubscriptionPublisher.class);
+        return Logging.get(FirestoreSubscriptionPublisher.class);
     }
 }

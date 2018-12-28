@@ -43,6 +43,7 @@ import static org.junit.Assert.assertNotNull;
 @DisplayName("FirebaseSubscriptionPublisher should")
 class FirebaseSubscriptionPublisherTest {
 
+    @SuppressWarnings("FutureReturnValueIgnored") // OK for test clean up.
     @Test
     @DisplayName("escape illegal chars in a document key")
     void escapeIllegalDocumentKey() throws ExecutionException,
@@ -74,6 +75,7 @@ class FirebaseSubscriptionPublisherTest {
         final FMCustomer actualState = FMCustomer.parseFrom(stateBlob.toBytes());
         assertEquals(expectedState, actualState);
 
-        document.getReference().delete();
+        document.getReference()
+                .delete();
     }
 }

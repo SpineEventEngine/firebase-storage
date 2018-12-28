@@ -22,6 +22,7 @@ package io.spine.server.firebase.given;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
+import com.google.common.base.Splitter;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -42,6 +43,7 @@ import io.spine.core.EventContext;
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
 import io.spine.core.UserId;
+import io.spine.logging.Logging;
 import io.spine.people.PersonName;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
@@ -70,12 +72,12 @@ import io.spine.string.StringifierRegistry;
 import io.spine.testing.server.TestEventFactory;
 import io.spine.testing.server.aggregate.AggregateMessageDispatcher;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -171,15 +173,15 @@ public final class FirebaseMirrorTestEnv {
 
             @Override
             protected FMSessionId fromString(String stringId) {
-                @SuppressWarnings("DynamicRegexReplaceableByCompiledPattern") // OK for tests.
-                final String[] parts = stringId.split(SEPARATOR);
-                checkArgument(parts.length == 2);
+                List<String> parts = Splitter.onPattern(SEPARATOR)
+                                             .splitToList(stringId);
+                checkArgument(parts.size() == 2);
                 final FMCustomerId customerId = FMCustomerId.newBuilder()
-                                                            .setUid(parts[0])
+                                                            .setUid(parts.get(0))
                                                             .build();
                 final Timestamp timestamp;
                 try {
-                    timestamp = Timestamps.parse(parts[1]);
+                    timestamp = Timestamps.parse(parts.get(1));
                 } catch (ParseException e) {
                     throw new IllegalArgumentException(e);
                 }
@@ -201,7 +203,7 @@ public final class FirebaseMirrorTestEnv {
 
     public static void createSession(FMSessionId sessionId, BoundedContext boundedContext) {
         final SessionProjection projection =
-                createEntity(sessionId, boundedContext, FMSession.class);
+                (SessionProjection) createEntity(sessionId, boundedContext, FMSession.class);
         final FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
         final Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
@@ -220,7 +222,7 @@ public final class FirebaseMirrorTestEnv {
                                              BoundedContext boundedContext,
                                              ActorRequestFactory requestFactory) {
         final CustomerAggregate aggregate =
-                createEntity(customerId, boundedContext, FMCustomer.class);
+                (CustomerAggregate) createEntity(customerId, boundedContext, FMCustomer.class);
         final CommandFactory commandFactory = requestFactory.command();
 
         final FMCreateCustomer createCmd = createCommand(customerId);
@@ -241,13 +243,13 @@ public final class FirebaseMirrorTestEnv {
         AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
-    private static <I, E extends Entity<I, S>, S extends Message> E
+    private static <I, S extends Message> Entity<I, S>
     createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
-        @SuppressWarnings("unchecked") final Repository<I, E> repository =
+        @SuppressWarnings("unchecked") final Repository<I, Entity<I, S>> repository =
                 boundedContext.findRepository(stateClass)
                               .orElse(null);
         assertNotNull(repository);
-        final E projection = repository.create(id);
+        final Entity<I, S> projection = repository.create(id);
         return projection;
     }
 
@@ -362,12 +364,6 @@ public final class FirebaseMirrorTestEnv {
             extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {}
 
     private static Logger log() {
-        return LogSingleton.INSTANCE.value;
-    }
-
-    private enum LogSingleton {
-        INSTANCE;
-        @SuppressWarnings("NonSerializableFieldInSerializableClass")
-        private final Logger value = LoggerFactory.getLogger(FirebaseMirrorTestEnv.class);
+        return Logging.get(FirebaseMirrorTestEnv.class);
     }
 }

@@ -24,8 +24,7 @@ import com.google.cloud.firestore.CollectionReference;
 import io.grpc.stub.StreamObserver;
 import io.spine.client.EntityStateUpdate;
 import io.spine.client.SubscriptionUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.spine.logging.Logging;
 
 import java.util.Collection;
 
@@ -43,7 +42,7 @@ import static java.lang.String.format;
  * @author Dmytro Dashenkov
  * @see FirestoreSubscriptionPublisher
  */
-final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpdate> {
+final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpdate>, Logging {
 
     private final String path;
     private final FirestoreSubscriptionPublisher publisher;
@@ -69,15 +68,5 @@ final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpd
     @Override
     public void onCompleted() {
         log().info("Subscription with target `{}` has been completed.", path);
-    }
-
-    private static Logger log() {
-        return LogSingleton.INSTANCE.value;
-    }
-
-    private enum LogSingleton {
-        INSTANCE;
-        @SuppressWarnings("NonSerializableFieldInSerializableClass")
-        private final Logger value = LoggerFactory.getLogger(SubscriptionUpdateObserver.class);
     }
 }

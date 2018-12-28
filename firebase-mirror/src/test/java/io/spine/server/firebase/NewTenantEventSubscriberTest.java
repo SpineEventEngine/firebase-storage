@@ -20,6 +20,7 @@
 
 package io.spine.server.firebase;
 
+import com.google.common.collect.ImmutableList;
 import io.spine.core.TenantId;
 import io.spine.server.firebase.NewTenantEventSubscriber.TenantCallback;
 import io.spine.server.tenant.TenantAdded;
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.newLinkedList;
 import static org.junit.Assert.assertEquals;
 
@@ -74,7 +74,7 @@ class NewTenantEventSubscriberTest {
         }
 
         private List<TenantId> getTenants() {
-            return copyOf(tenants);
+            return ImmutableList.copyOf(tenants);
         }
     }
 }
