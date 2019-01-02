@@ -69,5 +69,6 @@ final class SubscriptionObserver implements StreamObserver<Subscription> {
      */
     @Override
     public void onCompleted() {
+        // NO-OP, see doc.
     }
 }
