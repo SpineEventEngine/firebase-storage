@@ -52,6 +52,12 @@ allprojects {
 
     group = 'io.spine'
     version = spineVersion
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
 }
 
 subprojects {
