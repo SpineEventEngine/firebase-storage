@@ -37,7 +37,7 @@ final class DocumentKeys {
     private static final char INVALID_KEY_LEADING_CHAR = '_';
 
     /**
-     * The {@code private} constructor prevents the utility class instantiation.
+     * Prevents the utility class instantiation.
      */
     private DocumentKeys() {
     }
