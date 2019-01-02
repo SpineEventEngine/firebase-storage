@@ -18,25 +18,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.spine.server.firebase;
-
-import org.junit.Test;
-
-import static io.spine.test.Tests.assertHasPrivateParameterlessCtor;
-
 /**
- * @author Dmytro Dashenkov
+ * Contains classes for the Firebase Subscription mirror.
  */
-public class DocumentKeysShould {
-
-    @Test
-    public void have_util_ctor() {
-        assertHasPrivateParameterlessCtor(DocumentKeys.class);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void throw_IAE_on_invalid_key() {
-        final String invalidKey = "#@)?$";
-        DocumentKeys.escape(invalidKey);
-    }
-}
+package io.spine.server.firebase;

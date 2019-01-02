@@ -22,48 +22,70 @@ package io.spine.server.firebase;
 
 import com.google.common.testing.NullPointerTester;
 import io.grpc.stub.StreamObserver;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.Subscription;
 import io.spine.client.SubscriptionId;
 import io.spine.client.SubscriptionUpdate;
 import io.spine.server.SubscriptionService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static io.spine.grpc.StreamObservers.noOpObserver;
+import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class SubscriptionObserverShould {
+@SuppressWarnings("DuplicateStringLiteralInspection") // Test display names.
+@DisplayName("SubscriptionObserver should")
+class SubscriptionObserverTest {
 
     private SubscriptionService service;
     private StreamObserver<SubscriptionUpdate> updateObserver;
 
-    @Before
-    public void beforeEach() {
+    @BeforeEach
+    void beforeEach() {
         service = mock(SubscriptionService.class);
         updateObserver = noOpObserver();
     }
 
     @Test
-    public void activate_all_subscriptions() {
-        final SubscriptionObserver observer = new SubscriptionObserver(service, updateObserver);
-        final Subscription subscription = Subscription.newBuilder()
-                                                      .setId(newSubscriptionId())
-                                                      .build();
+    @DisplayName(NOT_ACCEPT_NULLS)
+    void passNullToleranceCheck() throws NoSuchMethodException {
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+        new NullPointerTester()
+                .ignore(SubscriptionObserver.class.getMethod("onError", Throwable.class))
+                .testAllPublicInstanceMethods(observer);
+    }
+
+    @Test
+    @DisplayName("not accept nulls on construction")
+    void rejectNullsOnConstruction() {
+        new NullPointerTester()
+                .setDefault(SubscriptionService.class, service)
+                .setDefault(StreamObserver.class, noOpObserver())
+                .testAllPublicConstructors(SubscriptionObserver.class);
+    }
+
+    @Test
+    @DisplayName("activate all subscriptions")
+    void activateAllSubscriptions() {
+        SubscriptionObserver observer = new SubscriptionObserver(service, updateObserver);
+        Subscription subscription = Subscription
+                .newBuilder()
+                .setId(newSubscriptionId())
+                .build();
         observer.onNext(subscription);
         verify(service).activate(subscription, updateObserver);
     }
 
     @Test
-    public void throw_ISE_upon_error() {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
-        final Throwable throwable = new CustomThrowable();
+    @DisplayName("throw ISE upon error")
+    void throwISEUponError() {
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+        Throwable throwable = new CustomThrowable();
         try {
             observer.onError(throwable);
             fail("Exception not thrown");
@@ -73,26 +95,11 @@ public class SubscriptionObserverShould {
     }
 
     @Test
-    public void do_nothing_upon_successful_completion() {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
+    @DisplayName("do nothing upon successful completion")
+    void doNothingUponSuccess() {
+        StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
         observer.onCompleted();
         observer.onCompleted();
-    }
-
-    @Test
-    public void not_accept_nulls_on_construction() {
-        new NullPointerTester()
-                .setDefault(SubscriptionService.class, service)
-                .setDefault(StreamObserver.class, noOpObserver())
-                .testAllPublicConstructors(SubscriptionObserver.class);
-    }
-
-    @Test
-    public void not_accept_null_arguments() throws NoSuchMethodException {
-        final StreamObserver<?> observer = new SubscriptionObserver(service, updateObserver);
-        new NullPointerTester()
-                .ignore(SubscriptionObserver.class.getMethod("onError", Throwable.class))
-                .testAllPublicInstanceMethods(observer);
     }
 
     private static SubscriptionId newSubscriptionId() {

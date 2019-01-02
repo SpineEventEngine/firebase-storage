@@ -18,8 +18,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-dependencies {
-    implementation deps.build.firebaseAdmin
-    testImplementation deps.test.guavaTestlib
-    testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
+final def SPINE_VERSION = '1.0.0-SNAPSHOT'
+
+ext {
+    spineVersion = SPINE_VERSION
+    spineBaseVersion = '1.0.0-SNAPSHOT'
+
+    nettyBoringsslVersion = '2.0.20.Final'
 }

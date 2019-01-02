@@ -25,11 +25,12 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.spine.Identifier;
+import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 
@@ -39,41 +40,44 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class FirebaseSubscriptionPublisherShould {
+@DisplayName("FirebaseSubscriptionPublisher should")
+class FirebaseSubscriptionPublisherTest {
 
+    @SuppressWarnings("FutureReturnValueIgnored") // OK for test clean up.
     @Test
-    public void escape_illegal_chars_in_a_document_key() throws ExecutionException,
-                                                                InterruptedException,
-                                                                InvalidProtocolBufferException {
-        final CollectionReference targetCollection = getFirestore().collection("test_records");
-        final FirestoreSubscriptionPublisher publisher =
+    @DisplayName("escape illegal chars in a document key")
+    void escapeIllegalDocumentKey() throws ExecutionException,
+                                           InterruptedException,
+                                           InvalidProtocolBufferException {
+        CollectionReference targetCollection = getFirestore().collection("test_records");
+        FirestoreSubscriptionPublisher publisher =
                 new FirestoreSubscriptionPublisher(targetCollection);
-        final String rawId = "___&$id001%-_foobar";
-        final String expectedId = "id001_foobar";
-        final Any id = Identifier.pack(rawId);
-        final FMCustomer expectedState = FMCustomer.newBuilder()
-                                                   .setId(FirebaseMirrorTestEnv.newId())
-                                                   .build();
-        final Any state = pack(expectedState);
-        final EntityStateUpdate update = EntityStateUpdate.newBuilder()
-                                                          .setId(id)
-                                                          .setState(state)
-                                                          .build();
+        String rawId = "___&$id001%-_foobar";
+        String expectedId = "id001_foobar";
+        Any id = Identifier.pack(rawId);
+        FMCustomer expectedState = FMCustomer
+                .newBuilder()
+                .setId(FirebaseMirrorTestEnv.newId())
+                .build();
+        Any state = pack(expectedState);
+        EntityStateUpdate update = EntityStateUpdate
+                .newBuilder()
+                .setId(id)
+                .setState(state)
+                .build();
         publisher.publish(singleton(update));
-        final DocumentSnapshot document = targetCollection.document(expectedId)
-                                                          .get()
-                                                          .get();
-        final String entityStateId = document.getString(EntityStateField.id.toString());
+        DocumentSnapshot document = targetCollection.document(expectedId)
+                                                    .get()
+                                                    .get();
+        String entityStateId = document.getString(EntityStateField.id.toString());
         assertEquals(rawId, entityStateId);
 
-        final Blob stateBlob = document.getBlob(EntityStateField.bytes.toString());
+        Blob stateBlob = document.getBlob(EntityStateField.bytes.toString());
         assertNotNull(state);
-        final FMCustomer actualState = FMCustomer.parseFrom(stateBlob.toBytes());
+        FMCustomer actualState = FMCustomer.parseFrom(stateBlob.toBytes());
         assertEquals(expectedState, actualState);
 
-        document.getReference().delete();
+        document.getReference()
+                .delete();
     }
 }

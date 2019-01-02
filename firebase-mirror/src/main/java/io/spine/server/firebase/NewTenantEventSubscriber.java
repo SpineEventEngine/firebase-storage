@@ -22,6 +22,7 @@ package io.spine.server.firebase;
 
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
+import io.spine.server.event.AbstractEventSubscriber;
 import io.spine.server.event.EventSubscriber;
 import io.spine.server.tenant.TenantAdded;
 
@@ -37,10 +38,8 @@ import static com.google.common.collect.Sets.newConcurrentHashSet;
  * <p>Not all the events cause the callback invocation, but only those that introduce a new
  * ({@linkplain #knownTenants previously unknown} to this instance of
  * {@code NewTenantEventSubscriber}) tenant ID.
- *
- * @author Dmytro Dashenkov
  */
-final class NewTenantEventSubscriber extends EventSubscriber {
+final class NewTenantEventSubscriber extends AbstractEventSubscriber {
 
     /**
      * Stores the IDs of tenants, which are already known to this instance of
@@ -55,7 +54,8 @@ final class NewTenantEventSubscriber extends EventSubscriber {
     /**
      * Creates a new instance of {@code NewTenantEventSubscriber}.
      *
-     * @param tenantCallback the callback to be invoked when a new tenant emerges
+     * @param tenantCallback
+     *         the callback to be invoked when a new tenant emerges
      */
     NewTenantEventSubscriber(TenantCallback tenantCallback) {
         super();
@@ -64,7 +64,7 @@ final class NewTenantEventSubscriber extends EventSubscriber {
 
     @Subscribe(external = true)
     public void on(TenantAdded event) {
-        final TenantId tenantId = event.getId();
+        TenantId tenantId = event.getId();
         log().info("Received TenantAdded event. New tenant ID is: {}", tenantId);
         if (!knownTenants.contains(tenantId)) {
             knownTenants.add(tenantId);
@@ -82,7 +82,8 @@ final class NewTenantEventSubscriber extends EventSubscriber {
         /**
          * Reacts on a new tenant.
          *
-         * @param tenantId the new tenant ID
+         * @param tenantId
+         *         the new tenant ID
          */
         void onTenant(TenantId tenantId);
     }

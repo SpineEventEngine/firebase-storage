@@ -18,8 +18,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-dependencies {
-    implementation deps.build.firebaseAdmin
-    testImplementation deps.test.guavaTestlib
-    testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
+package io.spine.server.firebase;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static io.spine.testing.DisplayNames.HAVE_PARAMETERLESS_CTOR;
+import static io.spine.testing.Tests.assertHasPrivateParameterlessCtor;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@DisplayName("DocumentKeys utility should")
+class DocumentKeysTest {
+
+    @Test
+    @DisplayName(HAVE_PARAMETERLESS_CTOR)
+    void haveUtilityCtor() {
+        assertHasPrivateParameterlessCtor(DocumentKeys.class);
+    }
+
+    @SuppressWarnings({"CheckReturnValue", "ResultOfMethodCallIgnored"})
+    // Method called to throw exception.
+    @Test
+    @DisplayName("throw IAE on invalid key")
+    void throwOnInvalidKey() {
+        String invalidKey = "#@)?$";
+        assertThrows(IllegalArgumentException.class, () -> DocumentKeys.escape(invalidKey));
+    }
 }

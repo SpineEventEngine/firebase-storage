@@ -18,13 +18,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-final def SPINE_VERSION = '0.10.15-SNAPSHOT'
-
-ext {
-    spineVersion = SPINE_VERSION
-    spineBaseVersion = '0.10.0'
-
-    protobufGradlePluginVersion = '0.8.3'
-    guavaVersion = '20.0'
-    slf4jVersion = '1.7.21'
-}
+/**
+ * Contains test environment classes for the Firebase Subscription mirror.
+ */
+package io.spine.server.firebase.given;

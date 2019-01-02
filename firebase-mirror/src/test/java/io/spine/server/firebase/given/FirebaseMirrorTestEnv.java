@@ -22,7 +22,8 @@ package io.spine.server.firebase.given;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
-import com.google.common.base.Supplier;
+import com.google.common.base.Splitter;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
@@ -30,6 +31,8 @@ import com.google.protobuf.Duration;
 import com.google.protobuf.Message;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
+import io.spine.base.CommandMessage;
+import io.spine.base.Time;
 import io.spine.client.ActorRequestFactory;
 import io.spine.client.CommandFactory;
 import io.spine.core.BoundedContextName;
@@ -40,14 +43,13 @@ import io.spine.core.EventContext;
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
 import io.spine.core.UserId;
+import io.spine.logging.Logging;
 import io.spine.people.PersonName;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
-import io.spine.server.aggregate.AggregateMessageDispatcher;
 import io.spine.server.aggregate.AggregateRepository;
 import io.spine.server.aggregate.Apply;
 import io.spine.server.command.Assign;
-import io.spine.server.command.TestEventFactory;
 import io.spine.server.entity.Entity;
 import io.spine.server.entity.Repository;
 import io.spine.server.firebase.FMChangeCustomerName;
@@ -67,38 +69,39 @@ import io.spine.server.stand.Stand;
 import io.spine.server.storage.StorageFactory;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
-import io.spine.time.Time;
+import io.spine.testing.server.TestEventFactory;
+import io.spine.testing.server.aggregate.AggregateMessageDispatcher;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
+import java.util.List;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Suppliers.ofInstance;
-import static io.spine.Identifier.newUuid;
-import static io.spine.client.TestActorRequestFactory.newInstance;
-import static io.spine.server.BoundedContext.newName;
-import static io.spine.server.projection.ProjectionEventDispatcher.dispatch;
+import static io.spine.base.Identifier.newUuid;
+import static io.spine.core.BoundedContextNames.newName;
 import static io.spine.server.storage.memory.InMemoryStorageFactory.newInstance;
+import static io.spine.testing.client.TestActorRequestFactory.newInstance;
+import static io.spine.testing.server.projection.ProjectionEventDispatcher.dispatch;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
 
 /**
  * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
- *
- * @author Dmytro Dashenkov
  */
+@SuppressWarnings("unused") // A lot of methods with reflective access only.
 public final class FirebaseMirrorTestEnv {
 
     private static final String FIREBASE_SERVICE_ACC_SECRET = "serviceAccount.json";
     private static final String DATABASE_URL = "https://spine-firestore-test.firebaseio.com";
 
-    private static final UserId TEST_ACTOR = UserId.newBuilder()
-                                                   .setValue("Firebase mirror test")
-                                                   .build();
+    private static final UserId TEST_ACTOR = UserId
+            .newBuilder()
+            .setValue("Firebase mirror test")
+            .build();
     private static final ActorRequestFactory defaultRequestFactory = newInstance(TEST_ACTOR);
     private static final TestEventFactory eventFactory =
             TestEventFactory.newInstance(FirebaseMirrorTestEnv.class);
@@ -130,13 +133,13 @@ public final class FirebaseMirrorTestEnv {
 
     @Nullable
     private static Firestore tryCreateFirestore() {
-        final InputStream firebaseSecret = FirebaseMirrorTestEnv.class
+        InputStream firebaseSecret = FirebaseMirrorTestEnv.class
                 .getClassLoader()
                 .getResourceAsStream(FIREBASE_SERVICE_ACC_SECRET);
         if (firebaseSecret == null) {
             return null;
         } else {
-            final GoogleCredentials credentials;
+            GoogleCredentials credentials;
             try {
                 credentials = GoogleCredentials.fromStream(firebaseSecret);
             } catch (IOException e) {
@@ -148,45 +151,48 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static Firestore createFirestore(GoogleCredentials credentials) {
-        final FirebaseOptions options = new FirebaseOptions.Builder()
+        FirebaseOptions options = new FirebaseOptions
+                .Builder()
                 .setDatabaseUrl(DATABASE_URL)
                 .setCredentials(credentials)
                 .build();
         FirebaseApp.initializeApp(options);
-        final Firestore firestore = FirestoreClient.getFirestore();
+        Firestore firestore = FirestoreClient.getFirestore();
         return firestore;
     }
 
     public static void registerSessionIdStringifier() {
-        final Stringifier<FMSessionId> stringifier = new Stringifier<FMSessionId>() {
+        Stringifier<FMSessionId> stringifier = new Stringifier<FMSessionId>() {
             private static final String SEPARATOR = "::";
 
             @Override
             protected String toString(FMSessionId genericId) {
-                final String customerUid = genericId.getCustomerId()
-                                                    .getUid();
-                final String timestamp = Timestamps.toString(genericId.getStartTime());
+                String customerUid = genericId.getCustomerId()
+                                              .getUid();
+                String timestamp = Timestamps.toString(genericId.getStartTime());
                 return customerUid + SEPARATOR + timestamp;
             }
 
             @Override
             protected FMSessionId fromString(String stringId) {
-                @SuppressWarnings("DynamicRegexReplaceableByCompiledPattern") // OK for tests.
-                final String[] parts = stringId.split(SEPARATOR);
-                checkArgument(parts.length == 2);
-                final FMCustomerId customerId = FMCustomerId.newBuilder()
-                                                            .setUid(parts[0])
-                                                            .build();
-                final Timestamp timestamp;
+                List<String> parts = Splitter.onPattern(SEPARATOR)
+                                             .splitToList(stringId);
+                checkArgument(parts.size() == 2);
+                FMCustomerId customerId = FMCustomerId
+                        .newBuilder()
+                        .setUid(parts.get(0))
+                        .build();
+                Timestamp timestamp;
                 try {
-                    timestamp = Timestamps.parse(parts[1]);
+                    timestamp = Timestamps.parse(parts.get(1));
                 } catch (ParseException e) {
                     throw new IllegalArgumentException(e);
                 }
-                final FMSessionId result = FMSessionId.newBuilder()
-                                                      .setCustomerId(customerId)
-                                                      .setStartTime(timestamp)
-                                                      .build();
+                FMSessionId result = FMSessionId
+                        .newBuilder()
+                        .setCustomerId(customerId)
+                        .setStartTime(timestamp)
+                        .build();
                 return result;
             }
         };
@@ -200,15 +206,16 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static void createSession(FMSessionId sessionId, BoundedContext boundedContext) {
-        final SessionProjection projection =
-                createEntity(sessionId, boundedContext, FMSession.class);
-        final FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
-        final Event event = eventFactory.createEvent(eventMsg);
+        SessionProjection projection =
+                (SessionProjection) createEntity(sessionId, boundedContext, FMSession.class);
+        FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
+        Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
-        final Stand stand = boundedContext.getStand();
+        Stand stand = boundedContext.getStand();
         stand.post(defaultTenant(), projection);
     }
 
+    @CanIgnoreReturnValue
     public static FMCustomer createCustomer(FMCustomerId customerId,
                                             BoundedContext boundedContext,
                                             TenantId tenantId) {
@@ -218,66 +225,70 @@ public final class FirebaseMirrorTestEnv {
     private static FMCustomer createCustomer(FMCustomerId customerId,
                                              BoundedContext boundedContext,
                                              ActorRequestFactory requestFactory) {
-        final CustomerAggregate aggregate =
-                createEntity(customerId, boundedContext, FMCustomer.class);
-        final CommandFactory commandFactory = requestFactory.command();
+        CustomerAggregate aggregate =
+                (CustomerAggregate) createEntity(customerId, boundedContext, FMCustomer.class);
+        CommandFactory commandFactory = requestFactory.command();
 
-        final FMCreateCustomer createCmd = createCommand(customerId);
-        final FMChangeCustomerName updateCmd = updateCommand(customerId);
+        FMCreateCustomer createCmd = createCommand(customerId);
+        FMChangeCustomerName updateCmd = updateCommand(customerId);
         dispatchCommand(aggregate, createCmd, commandFactory);
         dispatchCommand(aggregate, updateCmd, commandFactory);
-        final Stand stand = boundedContext.getStand();
-        final TenantId tenantId = requestFactory.getTenantId();
+        Stand stand = boundedContext.getStand();
+        TenantId tenantId = requestFactory.getTenantId();
         stand.post(tenantId == null ? defaultTenant() : tenantId, aggregate);
         return aggregate.getState();
     }
 
     private static void dispatchCommand(Aggregate<?, ?, ?> aggregate,
-                                        Message command,
+                                        CommandMessage command,
                                         CommandFactory factory) {
-        final Command cmd = factory.create(command);
-        final CommandEnvelope envelope = CommandEnvelope.of(cmd);
+        Command cmd = factory.create(command);
+        CommandEnvelope envelope = CommandEnvelope.of(cmd);
         AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
-    private static <I, E extends Entity<I, S>, S extends Message> E
+    private static <I, S extends Message> Entity<I, S>
     createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
-        @SuppressWarnings("unchecked") final Repository<I, E> repository =
+        @SuppressWarnings("unchecked") Repository<I, Entity<I, S>> repository =
                 boundedContext.findRepository(stateClass)
-                              .orNull();
+                              .orElse(null);
         assertNotNull(repository);
-        final E projection = repository.create(id);
+        Entity<I, S> projection = repository.create(id);
         return projection;
     }
 
     private static ActorRequestFactory requestFactory(TenantId tenantId) {
-        final ActorRequestFactory factory = newInstance(TEST_ACTOR, tenantId);
+        ActorRequestFactory factory = newInstance(TEST_ACTOR, tenantId);
         return factory;
     }
 
     private static FMCreateCustomer createCommand(FMCustomerId id) {
-        final FMCreateCustomer createCmd = FMCreateCustomer.newBuilder()
-                                                           .setId(id)
-                                                           .build();
+        FMCreateCustomer createCmd = FMCreateCustomer
+                .newBuilder()
+                .setId(id)
+                .build();
         return createCmd;
     }
 
     private static FMChangeCustomerName updateCommand(FMCustomerId id) {
-        final PersonName newName = PersonName.newBuilder()
-                                             .setGivenName("John")
-                                             .setFamilyName("Doe")
-                                             .build();
-        final FMChangeCustomerName updateCmd = FMChangeCustomerName.newBuilder()
-                                                                   .setId(id)
-                                                                   .setNewName(newName)
-                                                                   .build();
+        PersonName newName = PersonName
+                .newBuilder()
+                .setGivenName("John")
+                .setFamilyName("Doe")
+                .build();
+        FMChangeCustomerName updateCmd = FMChangeCustomerName
+                .newBuilder()
+                .setId(id)
+                .setNewName(newName)
+                .build();
         return updateCmd;
     }
 
     private static FMCustomerCreated createdEvent(FMCustomerId id) {
-        final FMCustomerCreated createCmd = FMCustomerCreated.newBuilder()
-                                                             .setId(id)
-                                                             .build();
+        FMCustomerCreated createCmd = FMCustomerCreated
+                .newBuilder()
+                .setId(id)
+                .build();
         return createCmd;
     }
 
@@ -288,14 +299,15 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static BoundedContext createBoundedContext(String name, boolean multitenant) {
-        final BoundedContextName contextName = newName(name);
-        final StorageFactory storageFactory = newInstance(contextName, multitenant);
-        final Supplier<StorageFactory> storageSupplier = ofInstance(storageFactory);
-        final BoundedContext result = BoundedContext.newBuilder()
-                                                    .setName(name)
-                                                    .setMultitenant(multitenant)
-                                                    .setStorageFactorySupplier(storageSupplier)
-                                                    .build();
+        BoundedContextName contextName = newName(name);
+        StorageFactory storageFactory = newInstance(contextName, multitenant);
+        Supplier<StorageFactory> storageSupplier = () -> storageFactory;
+        BoundedContext result = BoundedContext
+                .newBuilder()
+                .setName(name)
+                .setMultitenant(multitenant)
+                .setStorageFactorySupplier(storageSupplier)
+                .build();
         result.register(new CustomerRepository());
         result.register(new SessionRepository());
         return result;
@@ -308,13 +320,11 @@ public final class FirebaseMirrorTestEnv {
             super(id);
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Assign
         FMCustomerCreated handle(FMCreateCustomer command) {
             return createdEvent(command.getId());
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Assign
         FMCustomerNameChanged handle(FMChangeCustomerName command) {
             return FMCustomerNameChanged.newBuilder()
@@ -322,21 +332,20 @@ public final class FirebaseMirrorTestEnv {
                                         .build();
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Apply
         private void on(FMCustomerCreated event) {
             getBuilder().setId(event.getId());
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Apply
         private void on(FMCustomerNameChanged event) {
             getBuilder().setName(event.getNewName());
         }
     }
 
-    static class CustomerRepository
-            extends AggregateRepository<FMCustomerId, CustomerAggregate> {}
+    private static class CustomerRepository
+            extends AggregateRepository<FMCustomerId, CustomerAggregate> {
+    }
 
     public static class SessionProjection
             extends Projection<FMSessionId, FMSession, FMSessionVBuilder> {
@@ -345,33 +354,28 @@ public final class FirebaseMirrorTestEnv {
             super(id);
         }
 
-        @SuppressWarnings("unused") // Reflective access.
         @Subscribe
         void on(FMCustomerCreated event, EventContext context) {
             getBuilder().setDuration(mockLogic(context));
         }
 
         private static Duration mockLogic(EventContext context) {
-            final Timestamp currentTime = Time.getCurrentTime();
-            final Timestamp eventTime = context.getTimestamp();
-            final long durationSeconds = eventTime.getSeconds() - currentTime.getSeconds();
-            final Duration duration = Duration.newBuilder()
-                                              .setSeconds(durationSeconds)
-                                              .build();
+            Timestamp currentTime = Time.getCurrentTime();
+            Timestamp eventTime = context.getTimestamp();
+            long durationSeconds = eventTime.getSeconds() - currentTime.getSeconds();
+            Duration duration = Duration
+                    .newBuilder()
+                    .setSeconds(durationSeconds)
+                    .build();
             return duration;
         }
     }
 
-    static class SessionRepository
-            extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {}
-
-    private static Logger log() {
-        return LogSingleton.INSTANCE.value;
+    private static class SessionRepository
+            extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {
     }
 
-    private enum LogSingleton {
-        INSTANCE;
-        @SuppressWarnings("NonSerializableFieldInSerializableClass")
-        private final Logger value = LoggerFactory.getLogger(FirebaseMirrorTestEnv.class);
+    private static Logger log() {
+        return Logging.get(FirebaseMirrorTestEnv.class);
     }
 }

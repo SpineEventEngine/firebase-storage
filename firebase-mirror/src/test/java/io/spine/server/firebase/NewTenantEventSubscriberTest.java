@@ -20,29 +20,29 @@
 
 package io.spine.server.firebase;
 
+import com.google.common.collect.ImmutableList;
 import io.spine.core.TenantId;
 import io.spine.server.firebase.NewTenantEventSubscriber.TenantCallback;
 import io.spine.server.tenant.TenantAdded;
-import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.newLinkedList;
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Dmytro Dashenkov
- */
-public class NewTenantEventSubscriberShould {
+@DisplayName("NewTenantEventSubscriber should")
+class NewTenantEventSubscriberTest {
 
     @Test
-    public void not_trigger_callback_twice_for_same_tenant() {
-        final MemoizingTenantCallback callback = new MemoizingTenantCallback();
-        final NewTenantEventSubscriber subscriber = new NewTenantEventSubscriber(callback);
-        final TenantId theId = newId();
-        final TenantAdded event1 = event(theId);
-        final TenantAdded event2 = event(theId);
+    @DisplayName("not trigger callback twice for same tenant")
+    void notTriggerForSameTenant() {
+        MemoizingTenantCallback callback = new MemoizingTenantCallback();
+        NewTenantEventSubscriber subscriber = new NewTenantEventSubscriber(callback);
+        TenantId theId = newId();
+        TenantAdded event1 = event(theId);
+        TenantAdded event2 = event(theId);
 
         subscriber.on(event1);
         subscriber.on(event1);
@@ -52,15 +52,16 @@ public class NewTenantEventSubscriberShould {
     }
 
     private static TenantAdded event(TenantId tenantId) {
-        final TenantAdded event = TenantAdded.newBuilder()
-                                             .setId(tenantId)
-                                             .build();
+        TenantAdded event = TenantAdded
+                .newBuilder()
+                .setId(tenantId)
+                .build();
         return event;
     }
 
     private static TenantId newId() {
         return TenantId.newBuilder()
-                       .setValue(NewTenantEventSubscriberShould.class.getName())
+                       .setValue(NewTenantEventSubscriberTest.class.getName())
                        .build();
     }
 
@@ -74,7 +75,7 @@ public class NewTenantEventSubscriberShould {
         }
 
         private List<TenantId> getTenants() {
-            return copyOf(tenants);
+            return ImmutableList.copyOf(tenants);
         }
     }
 }
