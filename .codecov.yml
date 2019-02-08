@@ -8,8 +8,8 @@
 coverage:
   ignore:
   - generated/*
+  - examples/*
   - test/*
-
   status:
     patch: false
 
