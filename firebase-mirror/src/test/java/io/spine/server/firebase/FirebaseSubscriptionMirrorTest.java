@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -72,7 +72,6 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
 import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 import static io.spine.testing.client.TestActorRequestFactory.newInstance;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
