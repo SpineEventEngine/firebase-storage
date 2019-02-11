@@ -76,7 +76,7 @@ import static com.google.common.collect.Sets.newHashSet;
  *         select the desired project and enable Cloud Firestore.
  *     <li>Create an instance of {@link Firestore} and pass it to a
  *         {@code FirebaseSubscriptionMirror}.
- *     <li>{@linkplain #reflect(TypeUrl) Reflect} the selected entity types to Firestore.
+ *     <li>{@linkplain #reflect(TypeUrl) Reflect} the selected event/entity types to Firestore.
  * </ol>
  *
  * <a name="protocol"></a>
@@ -85,15 +85,19 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <h2>Location</h2>
  *
- * <p>The mirror writes the received entity state updates to the given Firestore by the following
- * rules:
+ * <p>The mirror writes the received updates to the given Firestore by the following rules:
  * <ul>
- *     <li>A {@linkplain CollectionReference collection} is created per entity type. The name of
- *         the collection is equal to the Protobuf type URL of the entity state. The underscore
- *         symbol ({@code "_"}) is used instead of slash ({@code "/"}).
- *     <li>The {@linkplain DocumentReference documents} in that collection represent the entity
- *         states. There is at most one document for each {@code Entity} instance.
- *     <li>When the entity is updated, the appropriate document is updated as well.
+ *     <li>A {@linkplain CollectionReference collection} is created per event/entity type. The name
+ *         of the collection is equal to the Protobuf type URL of the event message or entity
+ *         state. The underscore symbol ({@code "_"}) is used instead of slash ({@code "/"}).
+ *     <li>The {@linkplain DocumentReference documents} in that collection represent the received
+ *         events/entity state updates.
+ *     <li>For each observed {@code Entity} instance there is a single document containing the
+ *         entity ID and its latest state.
+ *     <li>For each observed {@code Event}, there is a single document containing event ID, event
+ *         message as well as timestamp and producer ID.
+ *     <li>When the entity is updated or event of the observed type is received, the appropriate
+ *         collection is updated as well.
  * </ul>
  *
  * <p><b>Example:</b>
@@ -108,16 +112,21 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <h2>Document structure</h2>
  *
- * <p>The Firestore documents created by the mirror have the following structure:
+ * <p>The documents containing observed entity states have the following structure:
  * <ul>
  *     <li>{@code id}: string;
  *     <li>{@code bytes}: BLOB.
  * </ul>
  *
- * <p>The {@code id} field contains the {@linkplain io.spine.base.Identifier#toString(Object)
- * string} representation of the entity ID.
+ * <p>The documents with information about occurred events have the following structure:
+ * <ul>
+ *     <li>{@code id}: string;
+ *     <li>{@code producer_id}: string;
+ *     <li>{@code timestamp}: string;
+ *     <li>{@code bytes}: BLOB.
+ * </ul>
  *
- * <p>The {@code bytes} field contains the serialized entity state.
+ * <p>For details, see {@link EntitySubscriptionPublisher} and {@link EventSubscriptionPublisher}.
  *
  * <p>If the entity ID is compound (i.e. has one that one field), a custom
  * {@link io.spine.string.Stringifier Stringifier} for the ID type may be useful for simple querying

@@ -47,18 +47,17 @@ final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Ev
 
     @Override
     protected String extractRecordIdentifier(Event update) {
-        EventContext context = update.getContext();
-        Object producerId = Identifier.unpack(context.getProducerId());
-        String result = Identifier.toString(producerId);
+        String result = update.getId()
+                              .getValue();
         return result;
     }
 
     @Override
     protected Map<String, Object> extractRecordData(Event update) {
-        String eventId = update.getId()
-                               .getValue();
-        String producerId = extractRecordIdentifier(update);
+        String eventId = extractRecordIdentifier(update);
         EventContext context = update.getContext();
+        Object producerId = Identifier.unpack(context.getProducerId());
+        String producerIdString = Identifier.toString(producerId);
         String timestampString = Timestamps.toString(context.getTimestamp());
         Message eventMessage = unpack(update.getMessage());
         byte[] messageBytes = eventMessage.toByteArray();
@@ -66,7 +65,7 @@ final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Ev
         Map<String, Object> result = ImmutableMap.of(
                 bytes.toString(), fromBytes(messageBytes),
                 timestamp.toString(), timestampString,
-                producer_id.toString(), producerId,
+                producer_id.toString(), producerIdString,
                 id.toString(), eventId
         );
         return result;

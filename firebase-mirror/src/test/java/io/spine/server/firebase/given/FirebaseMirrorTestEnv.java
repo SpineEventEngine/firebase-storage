@@ -40,6 +40,7 @@ import io.spine.core.Command;
 import io.spine.core.CommandEnvelope;
 import io.spine.core.Event;
 import io.spine.core.EventContext;
+import io.spine.core.EventId;
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
 import io.spine.core.UserId;
@@ -203,8 +204,8 @@ public final class FirebaseMirrorTestEnv {
                            .register(stringifier, FMSessionId.class);
     }
 
-    public static FMCustomerNameChanged postCustomerNameChanged(FMCustomerId customerId,
-                                                                BoundedContext boundedContext) {
+    public static EventId postCustomerNameChanged(FMCustomerId customerId,
+                                                  BoundedContext boundedContext) {
         FMCustomerNameChanged eventMsg = FMCustomerNameChanged
                 .newBuilder()
                 .setId(customerId)
@@ -214,7 +215,7 @@ public final class FirebaseMirrorTestEnv {
         Event event = factoryWithProducer.createEvent(eventMsg);
         EventBus eventBus = boundedContext.getEventBus();
         eventBus.post(event);
-        return eventMsg;
+        return event.getId();
     }
 
     public static FMCustomer createCustomer(FMCustomerId customerId,
