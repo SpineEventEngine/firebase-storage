@@ -318,7 +318,7 @@ public final class FirebaseSubscriptionMirror {
     private void doReflect(Topic topic) {
         CollectionReference collectionReference = collection(topic);
         StreamObserver<SubscriptionUpdate> updateObserver =
-                new SubscriptionUpdateObserver(collectionReference);
+                SubscriptionUpdateObserver.create(topic, collectionReference);
         StreamObserver<Subscription> subscriptionObserver =
                 new SubscriptionObserver(subscriptionService, updateObserver);
         subscriptionService.subscribe(topic, subscriptionObserver);

@@ -22,9 +22,11 @@ package io.spine.server.firebase;
 
 import com.google.cloud.firestore.CollectionReference;
 import io.grpc.stub.StreamObserver;
-import io.spine.client.EntityStateUpdate;
+import io.spine.base.EventMessage;
 import io.spine.client.SubscriptionUpdate;
+import io.spine.client.Topic;
 import io.spine.logging.Logging;
+import io.spine.type.TypeUrl;
 
 import java.util.Collection;
 
@@ -41,20 +43,29 @@ import static java.lang.String.format;
  *
  * @see FirestoreSubscriptionPublisher
  */
-final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpdate>, Logging {
+abstract class SubscriptionUpdateObserver<U>
+        implements StreamObserver<SubscriptionUpdate>, Logging {
 
     private final String path;
-    private final FirestoreSubscriptionPublisher publisher;
+    private final FirestoreSubscriptionPublisher<U> publisher;
 
-    SubscriptionUpdateObserver(CollectionReference target) {
+    SubscriptionUpdateObserver(CollectionReference target,
+                               FirestoreSubscriptionPublisher<U> publisher) {
         checkNotNull(target);
         this.path = target.getPath();
-        this.publisher = new FirestoreSubscriptionPublisher(target);
+        this.publisher = publisher;
+    }
+
+    static SubscriptionUpdateObserver<?> create(Topic topic, CollectionReference target) {
+        if (hasEventAsTarget(topic)) {
+            return new EventUpdateObserver(target);
+        }
+        return new EntityUpdateObserver(target);
     }
 
     @Override
     public void onNext(SubscriptionUpdate value) {
-        Collection<EntityStateUpdate> payload = value.getEntityStateUpdatesList();
+        Collection<U> payload = extractUpdates(value);
         publisher.publish(payload);
     }
 
@@ -67,5 +78,16 @@ final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpd
     @Override
     public void onCompleted() {
         log().info("Subscription with target `{}` has been completed.", path);
+    }
+
+    protected abstract Collection<U> extractUpdates(SubscriptionUpdate value);
+
+    private static boolean hasEventAsTarget(Topic topic) {
+        String typeUrl = topic.getTarget()
+                              .getType();
+        Class<?> targetClass = TypeUrl.parse(typeUrl)
+                                      .getJavaClass();
+        boolean result = EventMessage.class.isAssignableFrom(targetClass);
+        return result;
     }
 }

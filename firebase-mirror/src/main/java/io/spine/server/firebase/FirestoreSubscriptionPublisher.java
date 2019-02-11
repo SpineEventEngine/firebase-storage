@@ -23,31 +23,20 @@ package io.spine.server.firebase;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.WriteBatch;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.Any;
-import com.google.protobuf.Message;
-import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
 import io.spine.logging.Logging;
-import io.spine.server.storage.StorageField;
-import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static com.google.cloud.firestore.Blob.fromBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.spine.protobuf.AnyPacker.unpack;
-import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.bytes;
-import static io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField.id;
 
 /**
  * Publishes {@link EntityStateUpdate}s to <a target="_blank"
  * href="https://firebase.google.com/docs/firestore/">Cloud Firestore^</a>.
  */
-final class FirestoreSubscriptionPublisher {
+abstract class FirestoreSubscriptionPublisher<U> implements Logging {
 
     /**
      * The collection in the Cloud Firestore dedicated for the entity state update storage.
@@ -67,39 +56,35 @@ final class FirestoreSubscriptionPublisher {
      * @param updates
      *         updates to publish to the Firestore
      */
-    void publish(Iterable<EntityStateUpdate> updates) {
+    void publish(Iterable<U> updates) {
         checkNotNull(updates);
         WriteBatch batch = collection.getFirestore()
                                      .batch();
-        for (EntityStateUpdate update : updates) {
+        for (U update : updates) {
             write(batch, update);
         }
         Future<?> writeResult = batch.commit();
         waitFor(writeResult);
     }
 
-    private void write(WriteBatch batch, EntityStateUpdate update) {
-        Any updateId = update.getId();
-        Any updateState = update.getState();
-        Message entityId = unpack(updateId);
-        Message message = unpack(updateState);
-        String stringId = Identifier.toString(entityId);
-        byte[] stateBytes = message.toByteArray();
-        Map<String, Object> data = ImmutableMap.of(
-                bytes.toString(), fromBytes(stateBytes),
-                id.toString(), stringId
-        );
-        DocumentReference targetDocument = documentFor(stringId);
-        log().info("Writing a state update of the type {} (id: {}) into the Firestore location {}.",
-                   updateState.getTypeUrl(), stringId, targetDocument.getPath());
-        batch.set(targetDocument, data);
+    private void write(WriteBatch batch, U update) {
+        String identifier = extractRecordIdentifier(update);
+        Map<String, Object> data = extractRecordData(update);
+        DocumentReference document = documentFor(identifier);
+        log().info("Writing a subscription update with identifier {} into the Firestore " +
+                           "location {}.", identifier, document.getPath());
+        batch.set(document, data);
     }
 
-    private DocumentReference documentFor(String entityId) {
-        String documentKey = DocumentKeys.escape(entityId);
+    private DocumentReference documentFor(String identifier) {
+        String documentKey = DocumentKeys.escape(identifier);
         DocumentReference result = collection.document(documentKey);
         return result;
     }
+
+    protected abstract String extractRecordIdentifier(U update);
+
+    protected abstract Map<String, Object> extractRecordData(U update);
 
     /**
      * Blocks the current thread waiting for the given {@link Future} and logs all the caught
@@ -108,39 +93,11 @@ final class FirestoreSubscriptionPublisher {
      * @param future
      *         the future to wait for
      */
-    private static void waitFor(Future<?> future) {
+    private void waitFor(Future<?> future) {
         try {
             future.get();
         } catch (InterruptedException | ExecutionException e) {
             log().error("Unable to publish update:", e);
         }
-    }
-
-    /**
-     * The list of fields of the entity state as it is stored to Firestore.
-     *
-     * <p>The enum value names represent the names of the fields of an entity state record.
-     */
-    @VisibleForTesting
-    enum EntityStateField implements StorageField {
-
-        /**
-         * The string field for the entity ID.
-         *
-         * <p>The ID is converted to {@code String} by the rules of
-         * {@link io.spine.base.Identifier#toString(Object) Identifier.toString(id)}.
-         */
-        id,
-
-        /**
-         * The byte array representation of the entity state.
-         *
-         * @see Message#toByteArray()
-         */
-        bytes
-    }
-
-    private static Logger log() {
-        return Logging.get(FirestoreSubscriptionPublisher.class);
     }
 }
