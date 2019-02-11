@@ -42,8 +42,11 @@ import io.spine.net.EmailAddress;
 import io.spine.net.InternetDomain;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
+import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
+import io.spine.server.firebase.EventSubscriptionPublisher.EventStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import io.spine.server.integration.ExternalMessage;
+import io.spine.server.storage.StorageField;
 import io.spine.server.tenant.TenantAdded;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
@@ -52,6 +55,7 @@ import io.spine.type.TypeUrl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -70,12 +74,13 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createBounded
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createCustomer;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
+import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.postCustomerNameChanged;
 import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 import static io.spine.testing.client.TestActorRequestFactory.newInstance;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -109,6 +114,9 @@ class FirebaseSubscriptionMirrorTest {
 
     private static final TypeUrl CUSTOMER_TYPE = TypeUrl.of(FMCustomer.class);
     private static final TypeUrl SESSION_TYPE = TypeUrl.of(FMSession.class);
+
+    private static final TypeUrl CUSTOMER_NAME_CHANGED_TYPE =
+            TypeUrl.of(FMCustomerNameChanged.class);
 
     private final ActorRequestFactory requestFactory =
             newInstance(FirebaseSubscriptionMirrorTest.class);
@@ -211,14 +219,30 @@ class FirebaseSubscriptionMirrorTest {
         verify(spy).subscribe(any(Topic.class), any(SubscriptionObserver.class));
     }
 
-    @Test
-    @DisplayName("deliver the entity state updates")
-    void deliverTheEntityStateUpdates() throws ExecutionException, InterruptedException {
-        mirror.reflect(CUSTOMER_TYPE);
-        FMCustomerId customerId = newId();
-        FMCustomer expectedState = createCustomer(customerId, boundedContext);
-        FMCustomer actualState = findCustomer(customerId, inRoot());
-        assertEquals(expectedState, actualState);
+    @Nested
+    @DisplayName("deliver")
+    class Deliver {
+
+        @Test
+        @DisplayName("entity state updates")
+        void entityUpdates() throws ExecutionException, InterruptedException {
+            mirror.reflect(CUSTOMER_TYPE);
+            FMCustomerId customerId = newId();
+            FMCustomer expectedState = createCustomer(customerId, boundedContext);
+            FMCustomer actualState = findCustomer(customerId, inRoot());
+            assertEquals(expectedState, actualState);
+        }
+
+        @Test
+        @DisplayName("event updates")
+        void eventUpdates() throws ExecutionException, InterruptedException {
+            mirror.reflect(CUSTOMER_NAME_CHANGED_TYPE);
+            FMCustomerId customerId = newId();
+            FMCustomerNameChanged expectedMessage =
+                    postCustomerNameChanged(customerId, boundedContext);
+            FMCustomerNameChanged actualMessage = findCustomerRelatedEvent(customerId, inRoot());
+            assertEquals(expectedMessage, actualMessage);
+        }
     }
 
     @Test
@@ -228,9 +252,9 @@ class FirebaseSubscriptionMirrorTest {
         mirror.reflect(SESSION_TYPE);
         FMSessionId sessionId = FirebaseMirrorTestEnv.newSessionId();
         FirebaseMirrorTestEnv.createSession(sessionId, boundedContext);
-        DocumentSnapshot document = findDocument(FMSession.class,
-                                                 sessionId,
-                                                 inRoot());
+        DocumentSnapshot document = findEntityDocument(FMSession.class,
+                                                       sessionId,
+                                                       inRoot());
         String actualId = document.getString(id.toString());
         Stringifier<FMSessionId> stringifier =
                 StringifierRegistry.getInstance()
@@ -269,6 +293,7 @@ class FirebaseSubscriptionMirrorTest {
         createCustomer(customerId, boundedContext, secondTenant);
         Optional<DocumentSnapshot> document = tryFindDocument(
                 CUSTOMER_TYPE.getMessageClass(),
+                id,
                 customerId,
                 inRoot());
         assertFalse(document.isPresent());
@@ -391,9 +416,19 @@ class FirebaseSubscriptionMirrorTest {
                                            Function<String, CollectionReference> collectionAccess)
             throws ExecutionException,
                    InterruptedException {
-        DocumentSnapshot document = findDocument(FMCustomer.class, id, collectionAccess);
+        DocumentSnapshot document = findEntityDocument(FMCustomer.class, id, collectionAccess);
         FMCustomer customer = deserialize(document);
         return customer;
+    }
+
+    private static FMCustomerNameChanged
+    findCustomerRelatedEvent(FMCustomerId id,
+                             Function<String, CollectionReference> collectionAccess)
+            throws ExecutionException, InterruptedException {
+        DocumentSnapshot document =
+                findEventDocument(FMCustomerNameChanged.class, id, collectionAccess);
+        FMCustomerNameChanged event = deserializeEvent(document);
+        return event;
     }
 
     /**
@@ -405,11 +440,24 @@ class FirebaseSubscriptionMirrorTest {
      * @see #tryFindDocument(Class, Message, Function)
      */
     private static DocumentSnapshot
-    findDocument(Class<? extends Message> msgClass, Message id,
-                 Function<String, CollectionReference> collectionAccess)
-            throws ExecutionException,
-                   InterruptedException {
-        Optional<DocumentSnapshot> result = tryFindDocument(msgClass, id, collectionAccess);
+    findEntityDocument(Class<? extends Message> stateClass,
+                       Message entityId,
+                       Function<String, CollectionReference> collectionAccess)
+            throws ExecutionException, InterruptedException {
+        Optional<DocumentSnapshot> result =
+                tryFindDocument(stateClass, EntityStateField.id, entityId, collectionAccess);
+        assertTrue(result.isPresent());
+        return result.get();
+    }
+
+    private static DocumentSnapshot
+    findEventDocument(Class<? extends Message> eventClass,
+                      Message producerId,
+                      Function<String, CollectionReference> collectionAccess)
+            throws ExecutionException, InterruptedException {
+        Optional<DocumentSnapshot> result =
+                tryFindDocument(eventClass, EventStateField.producer_id, producerId,
+                                collectionAccess);
         assertTrue(result.isPresent());
         return result.get();
     }
@@ -431,7 +479,9 @@ class FirebaseSubscriptionMirrorTest {
      * @return the searched document or {@code Optional.empty()} if no such document is found
      */
     private static Optional<DocumentSnapshot>
-    tryFindDocument(Class<? extends Message> msgClass, Message id,
+    tryFindDocument(Class<? extends Message> msgClass,
+                    StorageField idField,
+                    Message idValue,
                     Function<String, CollectionReference> collectionAccess)
             throws ExecutionException,
                    InterruptedException {
@@ -443,16 +493,17 @@ class FirebaseSubscriptionMirrorTest {
         Optional<DocumentSnapshot> result = Optional.empty();
         for (DocumentSnapshot doc : collection.getDocuments()) {
             documents.add(doc.getReference());
-            if (idEquals(doc, id)) {
+            if (idEquals(doc, idField, idValue)) {
                 result = Optional.of(doc);
             }
         }
         return result;
     }
 
-    private static boolean idEquals(DocumentSnapshot document, Message customerId) {
-        Object actualId = document.get(id.toString());
-        String expectedIdString = Identifier.toString(customerId);
+    private static boolean
+    idEquals(DocumentSnapshot document, StorageField idField, Message idValue) {
+        Object actualId = document.get(idField.toString());
+        String expectedIdString = Identifier.toString(idValue);
         return expectedIdString.equals(actualId);
     }
 
@@ -462,6 +513,18 @@ class FirebaseSubscriptionMirrorTest {
         byte[] bytes = blob.toBytes();
         try {
             FMCustomer result = FMCustomer.parseFrom(bytes);
+            return result;
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    private static FMCustomerNameChanged deserializeEvent(DocumentSnapshot document) {
+        Blob blob = document.getBlob(EventStateField.bytes.toString());
+        assertNotNull(blob);
+        byte[] bytes = blob.toBytes();
+        try {
+            FMCustomerNameChanged result = FMCustomerNameChanged.parseFrom(bytes);
             return result;
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalArgumentException(e);

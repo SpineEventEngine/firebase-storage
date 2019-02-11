@@ -53,6 +53,7 @@ import io.spine.server.command.Assign;
 import io.spine.server.entity.Entity;
 import io.spine.server.entity.EntityLifecycle;
 import io.spine.server.entity.Repository;
+import io.spine.server.event.EventBus;
 import io.spine.server.firebase.FMChangeCustomerName;
 import io.spine.server.firebase.FMCreateCustomer;
 import io.spine.server.firebase.FMCustomer;
@@ -202,6 +203,20 @@ public final class FirebaseMirrorTestEnv {
                            .register(stringifier, FMSessionId.class);
     }
 
+    public static FMCustomerNameChanged postCustomerNameChanged(FMCustomerId customerId,
+                                                                BoundedContext boundedContext) {
+        FMCustomerNameChanged eventMsg = FMCustomerNameChanged
+                .newBuilder()
+                .setId(customerId)
+                .build();
+        TestEventFactory factoryWithProducer =
+                TestEventFactory.newInstance(customerId, FirebaseMirrorTestEnv.class);
+        Event event = factoryWithProducer.createEvent(eventMsg);
+        EventBus eventBus = boundedContext.getEventBus();
+        eventBus.post(event);
+        return eventMsg;
+    }
+
     public static FMCustomer createCustomer(FMCustomerId customerId,
                                             BoundedContext boundedContext) {
         return createCustomer(customerId, boundedContext, defaultRequestFactory);
@@ -262,14 +277,7 @@ public final class FirebaseMirrorTestEnv {
         AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
-    private static <I, S extends Message, E extends Entity<I, S>> E
-    createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
-        Repository<I, E> repository = findRepository(boundedContext, stateClass);
-        E entity = repository.create(id);
-        return entity;
-    }
-
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
     private static <I, S extends Message, E extends Entity<I, S>, R extends Repository<I, E>> R
     findRepository(BoundedContext boundedContext, Class<S> stateClass) {
         R repository = (R) boundedContext.findRepository(stateClass)
