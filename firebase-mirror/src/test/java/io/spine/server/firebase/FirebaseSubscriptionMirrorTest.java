@@ -397,20 +397,13 @@ class FirebaseSubscriptionMirrorTest {
     }
 
     /**
-     * Finds a {@code FMCustomer} with the given ID.
+     * Finds an {@code FMCustomer} with the given ID.
      *
      * <p>The collection of {@code FMCustomer} records is retrieved with the given
      * {@code collectionAccess} function.
      *
      * <p>Note that the {@code collectionAccess} accepts a short name of the collection (not
      * the whole path).
-     *
-     * @param id
-     *         the {@code FMCustomer} ID to search by
-     * @param collectionAccess
-     *         a function retrieving the {@linkplain CollectionReference collection} which holds
-     *         the {@code FMCustomer}
-     * @return the found {@code FMCustomer}
      */
     private static FMCustomer findCustomer(FMCustomerId id,
                                            Function<String, CollectionReference> collectionAccess)
@@ -421,6 +414,15 @@ class FirebaseSubscriptionMirrorTest {
         return customer;
     }
 
+    /**
+     * Finds an {@code FMCustomerNameChanged} event with the given event ID.
+     *
+     * <p>The collection of records is retrieved with the given
+     * {@code collectionAccess} function.
+     *
+     * <p>Note that the {@code collectionAccess} accepts a short name of the collection (not
+     * the whole path).
+     */
     private static FMCustomerNameChanged
     findEvent(EventId id, Function<String, CollectionReference> collectionAccess)
             throws ExecutionException, InterruptedException {
@@ -430,14 +432,6 @@ class FirebaseSubscriptionMirrorTest {
         return event;
     }
 
-    /**
-     * Finds a {@link DocumentReference} containing the given ID.
-     *
-     * <p>Unlike {@link #tryFindDocument(Class, Message, Function)}, this method throws
-     * a {@link NoSuchElementException} if the searched document is not found.
-     *
-     * @see #tryFindDocument(Class, Message, Function)
-     */
     private static DocumentSnapshot
     findEntityDocument(Class<? extends Message> stateClass,
                        Message entityId,
@@ -454,6 +448,14 @@ class FirebaseSubscriptionMirrorTest {
        return findDocument(eventClass, EventStateField.id, eventId, collectionAccess);
     }
 
+    /**
+     * Finds a {@link DocumentReference} containing the given ID.
+     *
+     * <p>Unlike {@link #tryFindDocument(Class, StorageField, Message, Function)}, this method
+     * throws a {@link NoSuchElementException} if the searched document is not found.
+     *
+     * @see #tryFindDocument(Class, StorageField, Message, Function)
+     */
     private static DocumentSnapshot
     findDocument(Class<? extends Message> msgClass,
                  StorageField idField,
@@ -467,7 +469,7 @@ class FirebaseSubscriptionMirrorTest {
     }
 
     /**
-     * Finds a {@link DocumentReference} containing the given ID.
+     * Finds a {@link DocumentReference} containing the given ID value at the given storage field.
      *
      * <p>The document is looked up in the {@linkplain CollectionReference collection} returned by
      * the given {@code collectionAccess} function. The collection should have the Protobuf type
@@ -475,6 +477,8 @@ class FirebaseSubscriptionMirrorTest {
      *
      * @param msgClass
      *         the type of the message stored in the searched document
+     * @param idField
+     *         a field containing the ID
      * @param id
      *         the ID of the message stored in the searched document
      * @param collectionAccess

@@ -37,6 +37,14 @@ import static io.spine.protobuf.AnyPacker.unpack;
 import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.bytes;
 import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.id;
 
+/**
+ * A subscription update publisher for the entity state updates.
+ *
+ * <p>The document identifier is an entity ID and the composed document body contains a new entity
+ * state.
+ *
+ * <p>For details on storage format, see {@link EntityStateField}.
+ */
 final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<EntityStateUpdate> {
 
     EntitySubscriptionPublisher(CollectionReference databaseSlice) {
@@ -44,7 +52,7 @@ final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<E
     }
 
     @Override
-    protected String extractRecordIdentifier(EntityStateUpdate update) {
+    protected String composeDocumentIdentifier(EntityStateUpdate update) {
         Any updateId = update.getId();
         EntityId entityId = (EntityId) unpack(updateId);
         Any id = entityId.getId();
@@ -54,8 +62,8 @@ final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<E
     }
 
     @Override
-    protected Map<String, Object> extractRecordData(EntityStateUpdate update) {
-        String stringId = extractRecordIdentifier(update);
+    protected Map<String, Object> composeDocumentBody(EntityStateUpdate update) {
+        String stringId = composeDocumentIdentifier(update);
         Any updateState = update.getState();
         Message message = unpack(updateState);
         byte[] stateBytes = message.toByteArray();

@@ -23,7 +23,6 @@ package io.spine.server.firebase;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.WriteBatch;
-import io.spine.client.EntityStateUpdate;
 import io.spine.logging.Logging;
 
 import java.util.Map;
@@ -33,13 +32,19 @@ import java.util.concurrent.Future;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Publishes {@link EntityStateUpdate}s to <a target="_blank"
+ * Publishes {@link io.spine.client.SubscriptionUpdate}s to <a target="_blank"
  * href="https://firebase.google.com/docs/firestore/">Cloud Firestore^</a>.
+ *
+ * <p>The descendants elaborate on how to compose the document identifier and body for this
+ * particular subscription.
+ *
+ * @param <U>
+ *         the subscription update payload format
  */
 abstract class FirestoreSubscriptionPublisher<U> implements Logging {
 
     /**
-     * The collection in the Cloud Firestore dedicated for the entity state update storage.
+     * The collection in the Cloud Firestore dedicated for storing subscription updates.
      */
     private final CollectionReference collection;
 
@@ -48,10 +53,10 @@ abstract class FirestoreSubscriptionPublisher<U> implements Logging {
     }
 
     /**
-     * Publishes the given {@link EntityStateUpdate}s into the Cloud Firestore.
+     * Publishes the given updates into the Cloud Firestore.
      *
-     * <p>Each {@code EntityStateUpdate} causes either a new document creation or an existent
-     * document update under the given {@code CollectionReference}.
+     * <p>Each update causes either a new document creation or an existent document update under
+     * the given {@code CollectionReference}.
      *
      * @param updates
      *         updates to publish to the Firestore
@@ -68,8 +73,8 @@ abstract class FirestoreSubscriptionPublisher<U> implements Logging {
     }
 
     private void write(WriteBatch batch, U update) {
-        String identifier = extractRecordIdentifier(update);
-        Map<String, Object> data = extractRecordData(update);
+        String identifier = composeDocumentIdentifier(update);
+        Map<String, Object> data = composeDocumentBody(update);
         DocumentReference document = documentFor(identifier);
         log().info("Writing a subscription update with identifier {} into the Firestore " +
                            "location {}.", identifier, document.getPath());
@@ -82,9 +87,15 @@ abstract class FirestoreSubscriptionPublisher<U> implements Logging {
         return result;
     }
 
-    protected abstract String extractRecordIdentifier(U update);
+    /**
+     * Composes an identifier for the Firestore document from the given update.
+     */
+    protected abstract String composeDocumentIdentifier(U update);
 
-    protected abstract Map<String, Object> extractRecordData(U update);
+    /**
+     * Composes a Firestore document body which reflects the given update.
+     */
+    protected abstract Map<String, Object> composeDocumentBody(U update);
 
     /**
      * Blocks the current thread waiting for the given {@link Future} and logs all the caught

@@ -74,8 +74,6 @@ final class NewTenantEventSubscriber extends AbstractEventSubscriber {
 
     /**
      * An interface of the callback triggered when a new tenant is discovered.
-     *
-     * @author Dmytro Dashenkov
      */
     interface TenantCallback {
 
