@@ -212,7 +212,6 @@ public final class FirebaseMirrorTestEnv {
         Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
         Stand stand = boundedContext.getStand();
-        stand.post(defaultTenant(), projection);
     }
 
     @CanIgnoreReturnValue
@@ -233,9 +232,6 @@ public final class FirebaseMirrorTestEnv {
         FMChangeCustomerName updateCmd = updateCommand(customerId);
         dispatchCommand(aggregate, createCmd, commandFactory);
         dispatchCommand(aggregate, updateCmd, commandFactory);
-        Stand stand = boundedContext.getStand();
-        TenantId tenantId = requestFactory.getTenantId();
-        stand.post(tenantId == null ? defaultTenant() : tenantId, aggregate);
         return aggregate.getState();
     }
 

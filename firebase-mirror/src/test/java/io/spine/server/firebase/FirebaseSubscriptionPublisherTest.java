@@ -27,13 +27,14 @@ import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.spine.base.Identifier;
 import io.spine.client.EntityStateUpdate;
-import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
+import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 
+import static io.spine.protobuf.AnyPacker.pack;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
@@ -49,8 +50,8 @@ class FirebaseSubscriptionPublisherTest {
                                            InterruptedException,
                                            InvalidProtocolBufferException {
         CollectionReference targetCollection = getFirestore().collection("test_records");
-        FirestoreSubscriptionPublisher publisher =
-                new FirestoreSubscriptionPublisher(targetCollection);
+        EntitySubscriptionPublisher publisher =
+                new EntitySubscriptionPublisher(targetCollection);
         String rawId = "___&$id001%-_foobar";
         String expectedId = "id001_foobar";
         Any id = Identifier.pack(rawId);

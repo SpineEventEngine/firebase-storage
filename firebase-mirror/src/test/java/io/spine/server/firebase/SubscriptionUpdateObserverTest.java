@@ -39,9 +39,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName(NOT_ACCEPT_NULLS)
     void passNullToleranceCheck() throws NoSuchMethodException {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target(),
-                                                                    new FirestoreSubscriptionPublisher(
-                                                                            target()));
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
         new NullPointerTester()
                 .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
                 .testAllPublicInstanceMethods(observer);
@@ -56,9 +54,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName("ignore error")
     void ignoreError() {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target(),
-                                                                    new FirestoreSubscriptionPublisher(
-                                                                            target()));
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
         String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
         EntityAlreadyArchived rejection = EntityAlreadyArchived
                 .newBuilder()
@@ -73,9 +69,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName("ignore completion")
     void ignoreCompletion() {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target(),
-                                                                    new FirestoreSubscriptionPublisher(
-                                                                            target()));
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
         observer.onCompleted();
         observer.onCompleted();
     }
