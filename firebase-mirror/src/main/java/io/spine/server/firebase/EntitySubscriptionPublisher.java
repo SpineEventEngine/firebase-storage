@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import io.spine.base.Identifier;
+import io.spine.client.EntityId;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.storage.StorageField;
 
@@ -45,8 +46,10 @@ final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<E
     @Override
     protected String extractRecordIdentifier(EntityStateUpdate update) {
         Any updateId = update.getId();
-        Message entityId = unpack(updateId);
-        String result = Identifier.toString(entityId);
+        EntityId entityId = (EntityId) unpack(updateId);
+        Any id = entityId.getId();
+        Message originalId = unpack(id);
+        String result = Identifier.toString(originalId);
         return result;
     }
 

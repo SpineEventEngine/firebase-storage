@@ -51,6 +51,7 @@ import io.spine.server.aggregate.AggregateRepository;
 import io.spine.server.aggregate.Apply;
 import io.spine.server.command.Assign;
 import io.spine.server.entity.Entity;
+import io.spine.server.entity.EntityLifecycle;
 import io.spine.server.entity.Repository;
 import io.spine.server.firebase.FMChangeCustomerName;
 import io.spine.server.firebase.FMCreateCustomer;
@@ -67,6 +68,7 @@ import io.spine.server.projection.Projection;
 import io.spine.server.projection.ProjectionRepository;
 import io.spine.server.stand.Stand;
 import io.spine.server.storage.StorageFactory;
+import io.spine.server.tenant.TenantAwareOperation;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
 import io.spine.testing.server.TestEventFactory;
@@ -92,7 +94,8 @@ import static org.junit.Assume.assumeNotNull;
 /**
  * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
  */
-@SuppressWarnings("unused") // A lot of methods with reflective access only.
+@SuppressWarnings({"unused" /* A lot of methods with reflective access only. */,
+        "deprecation" /* Deprecated `Stand.post(...)` will become test-only in the future. */})
 public final class FirebaseMirrorTestEnv {
 
     private static final String FIREBASE_SERVICE_ACC_SECRET = "serviceAccount.json";
@@ -153,7 +156,6 @@ public final class FirebaseMirrorTestEnv {
     private static Firestore createFirestore(GoogleCredentials credentials) {
         FirebaseOptions options = new FirebaseOptions
                 .Builder()
-                .setDatabaseUrl(DATABASE_URL)
                 .setCredentials(credentials)
                 .build();
         FirebaseApp.initializeApp(options);
@@ -206,12 +208,19 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static void createSession(FMSessionId sessionId, BoundedContext boundedContext) {
-        SessionProjection projection =
-                (SessionProjection) createEntity(sessionId, boundedContext, FMSession.class);
+        SessionRepository repository = findRepository(boundedContext, FMSession.class);
+        SessionProjection projection = repository.create(sessionId);
         FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
         Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
         Stand stand = boundedContext.getStand();
+        TenantAwareOperation op = new TenantAwareOperation(defaultTenant()) {
+            @Override
+            public void run() {
+                stand.post(projection, repository.lifecycleOf(sessionId));
+            }
+        };
+        op.execute();
     }
 
     @CanIgnoreReturnValue
@@ -224,14 +233,24 @@ public final class FirebaseMirrorTestEnv {
     private static FMCustomer createCustomer(FMCustomerId customerId,
                                              BoundedContext boundedContext,
                                              ActorRequestFactory requestFactory) {
-        CustomerAggregate aggregate =
-                (CustomerAggregate) createEntity(customerId, boundedContext, FMCustomer.class);
+        CustomerRepository repository = findRepository(boundedContext, FMCustomer.class);
+        CustomerAggregate aggregate = repository.create(customerId);
         CommandFactory commandFactory = requestFactory.command();
 
         FMCreateCustomer createCmd = createCommand(customerId);
         FMChangeCustomerName updateCmd = updateCommand(customerId);
         dispatchCommand(aggregate, createCmd, commandFactory);
         dispatchCommand(aggregate, updateCmd, commandFactory);
+        Stand stand = boundedContext.getStand();
+        TenantId tenantId = requestFactory.getTenantId();
+        TenantId realTenantId = tenantId == null ? defaultTenant() : tenantId;
+        TenantAwareOperation op = new TenantAwareOperation(realTenantId) {
+            @Override
+            public void run() {
+                stand.post(aggregate, repository.lifecycleOf(customerId));
+            }
+        };
+        op.execute();
         return aggregate.getState();
     }
 
@@ -243,14 +262,20 @@ public final class FirebaseMirrorTestEnv {
         AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
-    private static <I, S extends Message> Entity<I, S>
+    private static <I, S extends Message, E extends Entity<I, S>> E
     createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
-        @SuppressWarnings("unchecked") Repository<I, Entity<I, S>> repository =
-                boundedContext.findRepository(stateClass)
-                              .orElse(null);
+        Repository<I, E> repository = findRepository(boundedContext, stateClass);
+        E entity = repository.create(id);
+        return entity;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <I, S extends Message, E extends Entity<I, S>, R extends Repository<I, E>> R
+    findRepository(BoundedContext boundedContext, Class<S> stateClass) {
+        R repository = (R) boundedContext.findRepository(stateClass)
+                                         .orElseThrow(null);
         assertNotNull(repository);
-        Entity<I, S> projection = repository.create(id);
-        return projection;
+        return repository;
     }
 
     private static ActorRequestFactory requestFactory(TenantId tenantId) {
@@ -341,6 +366,11 @@ public final class FirebaseMirrorTestEnv {
 
     private static class CustomerRepository
             extends AggregateRepository<FMCustomerId, CustomerAggregate> {
+
+        @Override
+        protected EntityLifecycle lifecycleOf(FMCustomerId id) {
+            return super.lifecycleOf(id);
+        }
     }
 
     public static class SessionProjection
@@ -369,6 +399,11 @@ public final class FirebaseMirrorTestEnv {
 
     private static class SessionRepository
             extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {
+
+        @Override
+        protected EntityLifecycle lifecycleOf(FMSessionId id) {
+            return super.lifecycleOf(id);
+        }
     }
 
     private static Logger log() {

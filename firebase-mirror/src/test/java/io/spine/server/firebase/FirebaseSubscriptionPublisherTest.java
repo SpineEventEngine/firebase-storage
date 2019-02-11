@@ -26,6 +26,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.spine.base.Identifier;
+import io.spine.client.EntityId;
 import io.spine.client.EntityStateUpdate;
 import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
@@ -55,6 +56,11 @@ class FirebaseSubscriptionPublisherTest {
         String rawId = "___&$id001%-_foobar";
         String expectedId = "id001_foobar";
         Any id = Identifier.pack(rawId);
+        EntityId entityId = EntityId
+                .newBuilder()
+                .setId(id)
+                .build();
+        Any packedEntityId = Identifier.pack(entityId);
         FMCustomer expectedState = FMCustomer
                 .newBuilder()
                 .setId(FirebaseMirrorTestEnv.newId())
@@ -62,7 +68,7 @@ class FirebaseSubscriptionPublisherTest {
         Any state = pack(expectedState);
         EntityStateUpdate update = EntityStateUpdate
                 .newBuilder()
-                .setId(id)
+                .setId(packedEntityId)
                 .setState(state)
                 .build();
         publisher.publish(singleton(update));
