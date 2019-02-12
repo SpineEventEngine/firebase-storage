@@ -27,6 +27,13 @@ import io.spine.client.SubscriptionUpdate;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * A {@code SubscriptionUpdateObserver} for the entity state updates.
+ *
+ * <p>Publishes a new entity state to the underlying Firestore.
+ *
+ * @see EntitySubscriptionPublisher
+ */
 final class EntityUpdateObserver extends SubscriptionUpdateObserver<EntityStateUpdate> {
 
     EntityUpdateObserver(CollectionReference target) {
@@ -34,7 +41,7 @@ final class EntityUpdateObserver extends SubscriptionUpdateObserver<EntityStateU
     }
 
     @Override
-    protected Collection<EntityStateUpdate> extractUpdates(SubscriptionUpdate value) {
+    protected Collection<EntityStateUpdate> extractUpdatePayload(SubscriptionUpdate value) {
         List<EntityStateUpdate> result = value.getEntityUpdates()
                                               .getUpdatesList();
         return result;

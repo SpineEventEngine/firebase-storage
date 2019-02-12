@@ -39,6 +39,14 @@ import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateFi
 import static io.spine.server.firebase.EventSubscriptionPublisher.EventStateField.producer_id;
 import static io.spine.server.firebase.EventSubscriptionPublisher.EventStateField.timestamp;
 
+/**
+ * A subscription update publisher for the event subscriptions.
+ *
+ * <p>The document identifier is an event ID and the composed document body contains the serialized
+ * event message as well as some meta-information.
+ *
+ * <p>See {@link EventStateField} for the details on storage format.
+ */
 final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Event> {
 
     EventSubscriptionPublisher(CollectionReference databaseSlice) {
@@ -46,19 +54,18 @@ final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Ev
     }
 
     @Override
-    protected String extractRecordIdentifier(Event update) {
-        EventContext context = update.getContext();
-        Object producerId = Identifier.unpack(context.getProducerId());
-        String result = Identifier.toString(producerId);
+    protected String composeDocumentIdentifier(Event update) {
+        String result = update.getId()
+                              .getValue();
         return result;
     }
 
     @Override
-    protected Map<String, Object> extractRecordData(Event update) {
-        String eventId = update.getId()
-                               .getValue();
-        String producerId = extractRecordIdentifier(update);
+    protected Map<String, Object> composeDocumentBody(Event update) {
+        String eventId = composeDocumentIdentifier(update);
         EventContext context = update.getContext();
+        Object producerId = Identifier.unpack(context.getProducerId());
+        String producerIdString = Identifier.toString(producerId);
         String timestampString = Timestamps.toString(context.getTimestamp());
         Message eventMessage = unpack(update.getMessage());
         byte[] messageBytes = eventMessage.toByteArray();
@@ -66,24 +73,36 @@ final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Ev
         Map<String, Object> result = ImmutableMap.of(
                 bytes.toString(), fromBytes(messageBytes),
                 timestamp.toString(), timestampString,
-                producer_id.toString(), producerId,
+                producer_id.toString(), producerIdString,
                 id.toString(), eventId
         );
         return result;
     }
 
     /**
-     * The list of fields of the entity state as it is stored to Firestore.
+     * The format in which the occurred event is stored to Firestore.
      *
-     * <p>The enum value names represent the names of the fields of an entity state record.
+     * <p>The enum value names represent the names of the fields of an event record.
      */
     @VisibleForTesting
     enum EventStateField implements StorageField {
 
+        /**
+         * The raw event ID.
+         */
         id,
 
+        /**
+         * The ID of the entity which produced the event.
+         *
+         * <p>The ID is converted to {@code String} by the rules of
+         * {@link io.spine.base.Identifier#toString(Object) Identifier.toString(id)}.
+         */
         producer_id,
 
+        /**
+         * The timestamp of the event in a {@code String} form.
+         */
         timestamp,
 
         /**

@@ -37,9 +37,15 @@ import static java.lang.String.format;
  * An implementation of {@link StreamObserver} publishing the received {@link SubscriptionUpdate}s
  * to the given {@link CollectionReference Cloud Firestore location}.
  *
+ * <p>The descendants decide which part of the {@code SubscriptionUpdate} should be published and
+ * how.
+ *
  * <p>The implementation logs a message upon either
  * {@linkplain StreamObserver#onCompleted() successful} or
  * {@linkplain StreamObserver#onError faulty} stream completion.
+ *
+ * @param <U>
+ *         the subscription update payload format
  *
  * @see FirestoreSubscriptionPublisher
  */
@@ -65,7 +71,7 @@ abstract class SubscriptionUpdateObserver<U>
 
     @Override
     public void onNext(SubscriptionUpdate value) {
-        Collection<U> payload = extractUpdates(value);
+        Collection<U> payload = extractUpdatePayload(value);
         publisher.publish(payload);
     }
 
@@ -80,7 +86,10 @@ abstract class SubscriptionUpdateObserver<U>
         log().info("Subscription with target `{}` has been completed.", path);
     }
 
-    protected abstract Collection<U> extractUpdates(SubscriptionUpdate value);
+    /**
+     * Extracts the part which should be published from a {@code SubscriptionUpdate} message.
+     */
+    protected abstract Collection<U> extractUpdatePayload(SubscriptionUpdate value);
 
     private static boolean hasEventAsTarget(Topic topic) {
         String typeUrl = topic.getTarget()

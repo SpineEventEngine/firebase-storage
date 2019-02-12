@@ -27,6 +27,13 @@ import io.spine.core.Event;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * A {@code SubscriptionUpdateObserver} for the event subscriptions.
+ *
+ * <p>Publishes a new event which occurred in the system to the underlying Firestore.
+ *
+ * @see EventSubscriptionPublisher
+ */
 final class EventUpdateObserver extends SubscriptionUpdateObserver<Event> {
 
     EventUpdateObserver(CollectionReference target) {
@@ -34,7 +41,7 @@ final class EventUpdateObserver extends SubscriptionUpdateObserver<Event> {
     }
 
     @Override
-    protected Collection<Event> extractUpdates(SubscriptionUpdate value) {
+    protected Collection<Event> extractUpdatePayload(SubscriptionUpdate value) {
         List<Event> result = value.getEventUpdates()
                                   .getEventsList();
         return result;

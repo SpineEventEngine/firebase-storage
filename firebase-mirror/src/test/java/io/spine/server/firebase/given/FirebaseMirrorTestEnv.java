@@ -40,6 +40,7 @@ import io.spine.core.Command;
 import io.spine.core.CommandEnvelope;
 import io.spine.core.Event;
 import io.spine.core.EventContext;
+import io.spine.core.EventId;
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
 import io.spine.core.UserId;
@@ -64,7 +65,6 @@ import io.spine.server.firebase.FMCustomerVBuilder;
 import io.spine.server.firebase.FMSession;
 import io.spine.server.firebase.FMSessionId;
 import io.spine.server.firebase.FMSessionVBuilder;
-import io.spine.server.firebase.FirebaseSubscriptionMirror;
 import io.spine.server.projection.Projection;
 import io.spine.server.projection.ProjectionRepository;
 import io.spine.server.stand.Stand;
@@ -93,7 +93,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
 
 /**
- * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
+ * Test environment for the {@link io.spine.server.firebase.FirebaseSubscriptionMirror
+ * FirebaseSubscriptionMirror} tests.
  */
 @SuppressWarnings({"unused" /* A lot of methods with reflective access only. */,
         "deprecation" /* Deprecated `Stand.post(...)` will become test-only in the future. */})
@@ -113,7 +114,7 @@ public final class FirebaseMirrorTestEnv {
     @Nullable
     private static final Firestore firestore = tryCreateFirestore();
 
-    // Prevent utility class instantiation.
+    /** Prevents utility class instantiation. */
     private FirebaseMirrorTestEnv() {
     }
 
@@ -203,8 +204,8 @@ public final class FirebaseMirrorTestEnv {
                            .register(stringifier, FMSessionId.class);
     }
 
-    public static FMCustomerNameChanged postCustomerNameChanged(FMCustomerId customerId,
-                                                                BoundedContext boundedContext) {
+    public static EventId postCustomerNameChanged(FMCustomerId customerId,
+                                                  BoundedContext boundedContext) {
         FMCustomerNameChanged eventMsg = FMCustomerNameChanged
                 .newBuilder()
                 .setId(customerId)
@@ -214,7 +215,7 @@ public final class FirebaseMirrorTestEnv {
         Event event = factoryWithProducer.createEvent(eventMsg);
         EventBus eventBus = boundedContext.getEventBus();
         eventBus.post(event);
-        return eventMsg;
+        return event.getId();
     }
 
     public static FMCustomer createCustomer(FMCustomerId customerId,
