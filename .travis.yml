@@ -13,6 +13,7 @@ before_install:
   - mv ./serviceAccount.json ./firebase-mirror/src/test/resources/serviceAccount.json
 
 script:
+  - openssl version -a
   - ./gradlew check --stacktrace
 
   # The publishing script should be executed in `script` section in order to
