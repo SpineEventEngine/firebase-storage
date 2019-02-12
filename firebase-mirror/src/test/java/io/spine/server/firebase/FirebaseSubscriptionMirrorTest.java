@@ -43,8 +43,8 @@ import io.spine.net.EmailAddress;
 import io.spine.net.InternetDomain;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
-import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
-import io.spine.server.firebase.EventSubscriptionPublisher.EventStateField;
+import io.spine.server.firebase.EntityUpdatePublisher.EntityStateField;
+import io.spine.server.firebase.EventPublisher.EventField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import io.spine.server.integration.ExternalMessage;
 import io.spine.server.storage.StorageField;
@@ -69,7 +69,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static io.spine.base.Identifier.newUuid;
 import static io.spine.grpc.StreamObservers.noOpObserver;
 import static io.spine.protobuf.AnyPacker.pack;
-import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.bytes;
+import static io.spine.server.firebase.EntityUpdatePublisher.EntityStateField.bytes;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createBoundedContext;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.createCustomer;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
@@ -445,7 +445,7 @@ class FirebaseSubscriptionMirrorTest {
                       Message eventId,
                       Function<String, CollectionReference> collectionAccess)
             throws ExecutionException, InterruptedException {
-       return findDocument(eventClass, EventStateField.id, eventId, collectionAccess);
+       return findDocument(eventClass, EventField.id, eventId, collectionAccess);
     }
 
     /**
@@ -528,7 +528,7 @@ class FirebaseSubscriptionMirrorTest {
     }
 
     private static FMCustomerNameChanged deserializeEvent(DocumentSnapshot document) {
-        Blob blob = document.getBlob(EventStateField.bytes.toString());
+        Blob blob = document.getBlob(EventField.bytes.toString());
         assertNotNull(blob);
         byte[] bytes = blob.toBytes();
         try {

@@ -39,16 +39,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * particular subscription.
  *
  * @param <U>
- *         the subscription update payload format
+ *         the type of the published update
  */
-abstract class FirestoreSubscriptionPublisher<U> implements Logging {
+abstract class FirestorePublisher<U> implements Logging {
 
     /**
      * The collection in the Cloud Firestore dedicated for storing subscription updates.
      */
     private final CollectionReference collection;
 
-    FirestoreSubscriptionPublisher(CollectionReference databaseSlice) {
+    FirestorePublisher(CollectionReference databaseSlice) {
         this.collection = checkNotNull(databaseSlice);
     }
 

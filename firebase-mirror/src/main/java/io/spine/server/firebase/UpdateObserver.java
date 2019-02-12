@@ -45,26 +45,26 @@ import static java.lang.String.format;
  * {@linkplain StreamObserver#onError faulty} stream completion.
  *
  * @param <U>
- *         the subscription update payload format
+ *         the type of the observed update
  *
- * @see FirestoreSubscriptionPublisher
+ * @see FirestorePublisher
  */
-abstract class SubscriptionUpdateObserver<U>
+abstract class UpdateObserver<U>
         implements StreamObserver<SubscriptionUpdate>, Logging {
 
     private final String path;
-    private final FirestoreSubscriptionPublisher<U> publisher;
+    private final FirestorePublisher<U> publisher;
 
-    SubscriptionUpdateObserver(CollectionReference target,
-                               FirestoreSubscriptionPublisher<U> publisher) {
+    UpdateObserver(CollectionReference target,
+                   FirestorePublisher<U> publisher) {
         checkNotNull(target);
         this.path = target.getPath();
         this.publisher = publisher;
     }
 
-    static SubscriptionUpdateObserver<?> create(Topic topic, CollectionReference target) {
+    static UpdateObserver<?> create(Topic topic, CollectionReference target) {
         if (hasEventAsTarget(topic)) {
-            return new EventUpdateObserver(target);
+            return new EventObserver(target);
         }
         return new EntityUpdateObserver(target);
     }

@@ -34,20 +34,20 @@ import java.util.Map;
 
 import static com.google.cloud.firestore.Blob.fromBytes;
 import static io.spine.protobuf.AnyPacker.unpack;
-import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.bytes;
-import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.id;
+import static io.spine.server.firebase.EntityUpdatePublisher.EntityStateField.bytes;
+import static io.spine.server.firebase.EntityUpdatePublisher.EntityStateField.id;
 
 /**
- * A subscription update publisher for the entity state updates.
+ * An update publisher for the entity state updates.
  *
- * <p>The document identifier is an entity ID and the composed document body contains a new entity
+ * <p>The published document identifier is an entity ID and the document body stores a new entity
  * state.
  *
  * <p>For details on storage format, see {@link EntityStateField}.
  */
-final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<EntityStateUpdate> {
+final class EntityUpdatePublisher extends FirestorePublisher<EntityStateUpdate> {
 
-    EntitySubscriptionPublisher(CollectionReference databaseSlice) {
+    EntityUpdatePublisher(CollectionReference databaseSlice) {
         super(databaseSlice);
     }
 
@@ -75,7 +75,7 @@ final class EntitySubscriptionPublisher extends FirestoreSubscriptionPublisher<E
     }
 
     /**
-     * The list of fields of the entity state as it is stored to Firestore.
+     * The list of fields of the entity state as it is published to Firestore.
      *
      * <p>The enum value names represent the names of the fields of an entity state record.
      */

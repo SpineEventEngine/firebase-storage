@@ -126,7 +126,7 @@ import static com.google.common.collect.Sets.newHashSet;
  *     <li>{@code bytes}: BLOB.
  * </ul>
  *
- * <p>For details, see {@link EntitySubscriptionPublisher} and {@link EventSubscriptionPublisher}.
+ * <p>For details, see {@link EntityUpdatePublisher} and {@link EventPublisher}.
  *
  * <p>If the entity ID is compound (i.e. has one that one field), a custom
  * {@link io.spine.string.Stringifier Stringifier} for the ID type may be useful for simple querying
@@ -329,7 +329,7 @@ public final class FirebaseSubscriptionMirror {
     private void doReflect(Topic topic) {
         CollectionReference collectionReference = collection(topic);
         StreamObserver<SubscriptionUpdate> updateObserver =
-                SubscriptionUpdateObserver.create(topic, collectionReference);
+                UpdateObserver.create(topic, collectionReference);
         StreamObserver<Subscription> subscriptionObserver =
                 new SubscriptionObserver(subscriptionService, updateObserver);
         subscriptionService.subscribe(topic, subscriptionObserver);

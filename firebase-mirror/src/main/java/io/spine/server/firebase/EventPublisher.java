@@ -34,22 +34,22 @@ import java.util.Map;
 
 import static com.google.cloud.firestore.Blob.fromBytes;
 import static io.spine.protobuf.AnyPacker.unpack;
-import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.bytes;
-import static io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField.id;
-import static io.spine.server.firebase.EventSubscriptionPublisher.EventStateField.producer_id;
-import static io.spine.server.firebase.EventSubscriptionPublisher.EventStateField.timestamp;
+import static io.spine.server.firebase.EntityUpdatePublisher.EntityStateField.bytes;
+import static io.spine.server.firebase.EntityUpdatePublisher.EntityStateField.id;
+import static io.spine.server.firebase.EventPublisher.EventField.producer_id;
+import static io.spine.server.firebase.EventPublisher.EventField.timestamp;
 
 /**
- * A subscription update publisher for the event subscriptions.
+ * An update publisher for the event subscriptions.
  *
- * <p>The document identifier is an event ID and the composed document body contains the serialized
+ * <p>The published document identifier is an event ID and the document body stores the serialized
  * event message as well as some meta-information.
  *
- * <p>See {@link EventStateField} for the details on storage format.
+ * <p>See {@link EventField} for the details on storage format.
  */
-final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Event> {
+final class EventPublisher extends FirestorePublisher<Event> {
 
-    EventSubscriptionPublisher(CollectionReference databaseSlice) {
+    EventPublisher(CollectionReference databaseSlice) {
         super(databaseSlice);
     }
 
@@ -80,12 +80,12 @@ final class EventSubscriptionPublisher extends FirestoreSubscriptionPublisher<Ev
     }
 
     /**
-     * The format in which the occurred event is stored to Firestore.
+     * The format in which the occurred event is published to Firestore.
      *
      * <p>The enum value names represent the names of the fields of an event record.
      */
     @VisibleForTesting
-    enum EventStateField implements StorageField {
+    enum EventField implements StorageField {
 
         /**
          * The raw event ID.

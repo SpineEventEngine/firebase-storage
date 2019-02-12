@@ -28,7 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import io.spine.base.Identifier;
 import io.spine.client.EntityId;
 import io.spine.client.EntityStateUpdate;
-import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
+import io.spine.server.firebase.EntityUpdatePublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,8 +41,8 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@DisplayName("FirebaseSubscriptionPublisher should")
-class FirebaseSubscriptionPublisherTest {
+@DisplayName("FirebasePublisher should")
+class FirebasePublisherTest {
 
     @SuppressWarnings("FutureReturnValueIgnored") // OK for test clean up.
     @Test
@@ -51,8 +51,8 @@ class FirebaseSubscriptionPublisherTest {
                                            InterruptedException,
                                            InvalidProtocolBufferException {
         CollectionReference targetCollection = getFirestore().collection("test_records");
-        EntitySubscriptionPublisher publisher =
-                new EntitySubscriptionPublisher(targetCollection);
+        EntityUpdatePublisher publisher =
+                new EntityUpdatePublisher(targetCollection);
         String rawId = "___&$id001%-_foobar";
         String expectedId = "id001_foobar";
         Any id = Identifier.pack(rawId);

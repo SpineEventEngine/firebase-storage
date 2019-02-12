@@ -28,16 +28,16 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A {@code SubscriptionUpdateObserver} for the entity state updates.
+ * An {@code UpdateObserver} for the entity state updates.
  *
  * <p>Publishes a new entity state to the underlying Firestore.
  *
- * @see EntitySubscriptionPublisher
+ * @see EntityUpdatePublisher
  */
-final class EntityUpdateObserver extends SubscriptionUpdateObserver<EntityStateUpdate> {
+final class EntityUpdateObserver extends UpdateObserver<EntityStateUpdate> {
 
     EntityUpdateObserver(CollectionReference target) {
-        super(target, new EntitySubscriptionPublisher(target));
+        super(target, new EntityUpdatePublisher(target));
     }
 
     @Override

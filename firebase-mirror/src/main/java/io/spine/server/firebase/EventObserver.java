@@ -28,16 +28,16 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A {@code SubscriptionUpdateObserver} for the event subscriptions.
+ * An {@code UpdateObserver} for the event subscriptions.
  *
  * <p>Publishes a new event which occurred in the system to the underlying Firestore.
  *
- * @see EventSubscriptionPublisher
+ * @see EventPublisher
  */
-final class EventUpdateObserver extends SubscriptionUpdateObserver<Event> {
+final class EventObserver extends UpdateObserver<Event> {
 
-    EventUpdateObserver(CollectionReference target) {
-        super(target, new EventSubscriptionPublisher(target));
+    EventObserver(CollectionReference target) {
+        super(target, new EventPublisher(target));
     }
 
     @Override
