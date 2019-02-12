@@ -24,7 +24,3 @@ dependencies {
     testImplementation deps.test.guavaTestlib
     testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
 }
-
-test {
-    testLogging.showStandardStreams = true
-}
