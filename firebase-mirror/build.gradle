@@ -19,8 +19,8 @@
  */
 
 dependencies {
-    implementation "io.grpc:grpc-netty-shaded:1.18.0"
     implementation deps.build.firebaseAdmin
+    implementation "io.grpc:grpc-netty-shaded:$grpcNettyShadedVersion"
     testImplementation deps.test.guavaTestlib
     testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
 }
