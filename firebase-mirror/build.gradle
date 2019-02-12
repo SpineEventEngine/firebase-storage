@@ -19,6 +19,7 @@
  */
 
 dependencies {
+    implementation "io.grpc:grpc-netty:1.17.0"
     implementation deps.build.firebaseAdmin
     testImplementation deps.test.guavaTestlib
     testImplementation "io.netty:netty-tcnative-boringssl-static:$nettyBoringsslVersion"
