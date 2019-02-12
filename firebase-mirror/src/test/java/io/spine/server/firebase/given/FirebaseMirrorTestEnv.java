@@ -158,6 +158,7 @@ public final class FirebaseMirrorTestEnv {
     private static Firestore createFirestore(GoogleCredentials credentials) {
         FirebaseOptions options = new FirebaseOptions
                 .Builder()
+                .setDatabaseUrl(DATABASE_URL)
                 .setCredentials(credentials)
                 .build();
         FirebaseApp.initializeApp(options);
