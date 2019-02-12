@@ -28,6 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import io.spine.base.Identifier;
 import io.spine.client.EntityId;
 import io.spine.client.EntityStateUpdate;
+import io.spine.logging.Logging;
 import io.spine.server.firebase.EntitySubscriptionPublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import org.junit.jupiter.api.DisplayName;
@@ -37,12 +38,14 @@ import java.util.concurrent.ExecutionException;
 
 import static io.spine.protobuf.AnyPacker.pack;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
+import static io.spine.util.Exceptions.newIllegalStateException;
+import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @DisplayName("FirebaseSubscriptionPublisher should")
-class FirebaseSubscriptionPublisherTest {
+class FirebaseSubscriptionPublisherTest implements Logging {
 
     @SuppressWarnings("FutureReturnValueIgnored") // OK for test clean up.
     @Test
@@ -72,9 +75,7 @@ class FirebaseSubscriptionPublisherTest {
                 .setState(state)
                 .build();
         publisher.publish(singleton(update));
-        DocumentSnapshot document = targetCollection.document(expectedId)
-                                                    .get()
-                                                    .get();
+        DocumentSnapshot document = getDocumentSafe(targetCollection, expectedId);
         String entityStateId = document.getString(EntityStateField.id.toString());
         assertEquals(rawId, entityStateId);
 
@@ -85,5 +86,20 @@ class FirebaseSubscriptionPublisherTest {
 
         document.getReference()
                 .delete();
+    }
+
+    private DocumentSnapshot getDocumentSafe(CollectionReference targetCollection,
+                                             String expectedId) {
+        try {
+            log().warn("Trying to obtain the document for target collection.");
+            return targetCollection.document(expectedId)
+                                   .get()
+                                   .get();
+        } catch (Throwable t) {
+            String errorMessage = format("Failed to obtain the document for target " +
+                                           "collection, cause: %s", t.getLocalizedMessage());
+            log().warn(errorMessage);
+            throw newIllegalStateException(t, errorMessage);
+        }
     }
 }
