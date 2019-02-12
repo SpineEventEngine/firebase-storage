@@ -1,4 +1,3 @@
-dist: xenial
 language: java
 
 before_install:
