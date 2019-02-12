@@ -95,7 +95,7 @@ import static com.google.common.collect.Sets.newHashSet;
  *     <li>For each observed {@code Entity} instance there is a single document containing the
  *         entity ID and its latest state.
  *     <li>For each observed {@code Event}, there is a single document containing event ID, event
- *         message as well as timestamp and producer ID.
+ *         message as well as the timestamp and the producer ID.
  *     <li>When the entity is updated or event of the observed type is received, the appropriate
  *         collection is updated as well.
  * </ul>
