@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -33,7 +33,8 @@ import static io.spine.util.Exceptions.illegalStateWithCauseOf;
  * {@linkplain SubscriptionService#activate activates} all the received {@link Subscription}s
  * with the specified {@code SubscriptionService}.
  *
- * <p>After activation, the given {@code dataObserver} starts receiving the Entity state updates.
+ * <p>After activation, the given {@code dataObserver} starts receiving the Entity state and event
+ * updates.
  *
  * <p>The implementation throws a {@link RuntimeException} upon any
  * {@linkplain StreamObserver#onError error} and handles the

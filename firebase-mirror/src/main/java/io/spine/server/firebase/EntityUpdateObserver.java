@@ -18,7 +18,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * Contains classes for the Firebase Subscription mirror.
- */
 package io.spine.server.firebase;
+
+import com.google.cloud.firestore.CollectionReference;
+import io.spine.client.EntityStateUpdate;
+import io.spine.client.SubscriptionUpdate;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * An {@code UpdateObserver} for the entity state updates.
+ *
+ * <p>Publishes a new entity state to the underlying Firestore.
+ *
+ * @see EntityUpdatePublisher
+ */
+final class EntityUpdateObserver extends UpdateObserver<EntityStateUpdate> {
+
+    EntityUpdateObserver(CollectionReference target) {
+        super(target, new EntityUpdatePublisher(target));
+    }
+
+    @Override
+    protected Collection<EntityStateUpdate> extractUpdatePayload(SubscriptionUpdate value) {
+        List<EntityStateUpdate> result = value.getEntityUpdates()
+                                              .getUpdatesList();
+        return result;
+    }
+}

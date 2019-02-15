@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -40,6 +40,7 @@ import io.spine.core.Command;
 import io.spine.core.CommandEnvelope;
 import io.spine.core.Event;
 import io.spine.core.EventContext;
+import io.spine.core.EventId;
 import io.spine.core.Subscribe;
 import io.spine.core.TenantId;
 import io.spine.core.UserId;
@@ -51,7 +52,9 @@ import io.spine.server.aggregate.AggregateRepository;
 import io.spine.server.aggregate.Apply;
 import io.spine.server.command.Assign;
 import io.spine.server.entity.Entity;
+import io.spine.server.entity.EntityLifecycle;
 import io.spine.server.entity.Repository;
+import io.spine.server.event.EventBus;
 import io.spine.server.firebase.FMChangeCustomerName;
 import io.spine.server.firebase.FMCreateCustomer;
 import io.spine.server.firebase.FMCustomer;
@@ -62,11 +65,11 @@ import io.spine.server.firebase.FMCustomerVBuilder;
 import io.spine.server.firebase.FMSession;
 import io.spine.server.firebase.FMSessionId;
 import io.spine.server.firebase.FMSessionVBuilder;
-import io.spine.server.firebase.FirebaseSubscriptionMirror;
 import io.spine.server.projection.Projection;
 import io.spine.server.projection.ProjectionRepository;
 import io.spine.server.stand.Stand;
 import io.spine.server.storage.StorageFactory;
+import io.spine.server.tenant.TenantAwareOperation;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
 import io.spine.testing.server.TestEventFactory;
@@ -90,9 +93,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeNotNull;
 
 /**
- * Test environment for the {@link FirebaseSubscriptionMirror FirebaseSubscriptionMirror} tests.
+ * Test environment for the {@link io.spine.server.firebase.FirebaseSubscriptionMirror
+ * FirebaseSubscriptionMirror} tests.
  */
-@SuppressWarnings("unused") // A lot of methods with reflective access only.
+@SuppressWarnings({"unused" /* A lot of methods with reflective access only. */,
+        "deprecation" /* Deprecated `Stand.post(...)` will become test-only in the future. */})
 public final class FirebaseMirrorTestEnv {
 
     private static final String FIREBASE_SERVICE_ACC_SECRET = "serviceAccount.json";
@@ -109,7 +114,7 @@ public final class FirebaseMirrorTestEnv {
     @Nullable
     private static final Firestore firestore = tryCreateFirestore();
 
-    // Prevent utility class instantiation.
+    /** Prevents utility class instantiation. */
     private FirebaseMirrorTestEnv() {
     }
 
@@ -200,19 +205,39 @@ public final class FirebaseMirrorTestEnv {
                            .register(stringifier, FMSessionId.class);
     }
 
+    public static EventId postCustomerNameChanged(FMCustomerId customerId,
+                                                  BoundedContext boundedContext) {
+        FMCustomerNameChanged eventMsg = FMCustomerNameChanged
+                .newBuilder()
+                .setId(customerId)
+                .build();
+        TestEventFactory factoryWithProducer =
+                TestEventFactory.newInstance(customerId, FirebaseMirrorTestEnv.class);
+        Event event = factoryWithProducer.createEvent(eventMsg);
+        EventBus eventBus = boundedContext.getEventBus();
+        eventBus.post(event);
+        return event.getId();
+    }
+
     public static FMCustomer createCustomer(FMCustomerId customerId,
                                             BoundedContext boundedContext) {
         return createCustomer(customerId, boundedContext, defaultRequestFactory);
     }
 
     public static void createSession(FMSessionId sessionId, BoundedContext boundedContext) {
-        SessionProjection projection =
-                (SessionProjection) createEntity(sessionId, boundedContext, FMSession.class);
+        SessionRepository repository = findRepository(boundedContext, FMSession.class);
+        SessionProjection projection = repository.create(sessionId);
         FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
         Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
         Stand stand = boundedContext.getStand();
-        stand.post(defaultTenant(), projection);
+        TenantAwareOperation op = new TenantAwareOperation(defaultTenant()) {
+            @Override
+            public void run() {
+                stand.post(projection, repository.lifecycleOf(sessionId));
+            }
+        };
+        op.execute();
     }
 
     @CanIgnoreReturnValue
@@ -225,8 +250,8 @@ public final class FirebaseMirrorTestEnv {
     private static FMCustomer createCustomer(FMCustomerId customerId,
                                              BoundedContext boundedContext,
                                              ActorRequestFactory requestFactory) {
-        CustomerAggregate aggregate =
-                (CustomerAggregate) createEntity(customerId, boundedContext, FMCustomer.class);
+        CustomerRepository repository = findRepository(boundedContext, FMCustomer.class);
+        CustomerAggregate aggregate = repository.create(customerId);
         CommandFactory commandFactory = requestFactory.command();
 
         FMCreateCustomer createCmd = createCommand(customerId);
@@ -235,7 +260,14 @@ public final class FirebaseMirrorTestEnv {
         dispatchCommand(aggregate, updateCmd, commandFactory);
         Stand stand = boundedContext.getStand();
         TenantId tenantId = requestFactory.getTenantId();
-        stand.post(tenantId == null ? defaultTenant() : tenantId, aggregate);
+        TenantId realTenantId = tenantId == null ? defaultTenant() : tenantId;
+        TenantAwareOperation op = new TenantAwareOperation(realTenantId) {
+            @Override
+            public void run() {
+                stand.post(aggregate, repository.lifecycleOf(customerId));
+            }
+        };
+        op.execute();
         return aggregate.getState();
     }
 
@@ -247,14 +279,13 @@ public final class FirebaseMirrorTestEnv {
         AggregateMessageDispatcher.dispatchCommand(aggregate, envelope);
     }
 
-    private static <I, S extends Message> Entity<I, S>
-    createEntity(I id, BoundedContext boundedContext, Class<S> stateClass) {
-        @SuppressWarnings("unchecked") Repository<I, Entity<I, S>> repository =
-                boundedContext.findRepository(stateClass)
-                              .orElse(null);
+    @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+    private static <I, S extends Message, E extends Entity<I, S>, R extends Repository<I, E>> R
+    findRepository(BoundedContext boundedContext, Class<S> stateClass) {
+        R repository = (R) boundedContext.findRepository(stateClass)
+                                         .orElseThrow(null);
         assertNotNull(repository);
-        Entity<I, S> projection = repository.create(id);
-        return projection;
+        return repository;
     }
 
     private static ActorRequestFactory requestFactory(TenantId tenantId) {
@@ -345,6 +376,11 @@ public final class FirebaseMirrorTestEnv {
 
     private static class CustomerRepository
             extends AggregateRepository<FMCustomerId, CustomerAggregate> {
+
+        @Override
+        protected EntityLifecycle lifecycleOf(FMCustomerId id) {
+            return super.lifecycleOf(id);
+        }
     }
 
     public static class SessionProjection
@@ -373,6 +409,11 @@ public final class FirebaseMirrorTestEnv {
 
     private static class SessionRepository
             extends ProjectionRepository<FMSessionId, SessionProjection, FMSession> {
+
+        @Override
+        protected EntityLifecycle lifecycleOf(FMSessionId id) {
+            return super.lifecycleOf(id);
+        }
     }
 
     private static Logger log() {

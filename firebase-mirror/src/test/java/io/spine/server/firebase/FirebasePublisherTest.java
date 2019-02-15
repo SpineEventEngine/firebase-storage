@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -26,8 +26,9 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.spine.base.Identifier;
+import io.spine.client.EntityId;
 import io.spine.client.EntityStateUpdate;
-import io.spine.server.firebase.FirestoreSubscriptionPublisher.EntityStateField;
+import io.spine.server.firebase.EntityUpdatePublisher.EntityStateField;
 import io.spine.server.firebase.given.FirebaseMirrorTestEnv;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,8 +41,8 @@ import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-@DisplayName("FirebaseSubscriptionPublisher should")
-class FirebaseSubscriptionPublisherTest {
+@DisplayName("FirebasePublisher should")
+class FirebasePublisherTest {
 
     @SuppressWarnings("FutureReturnValueIgnored") // OK for test clean up.
     @Test
@@ -50,11 +51,16 @@ class FirebaseSubscriptionPublisherTest {
                                            InterruptedException,
                                            InvalidProtocolBufferException {
         CollectionReference targetCollection = getFirestore().collection("test_records");
-        FirestoreSubscriptionPublisher publisher =
-                new FirestoreSubscriptionPublisher(targetCollection);
+        EntityUpdatePublisher publisher =
+                new EntityUpdatePublisher(targetCollection);
         String rawId = "___&$id001%-_foobar";
         String expectedId = "id001_foobar";
         Any id = Identifier.pack(rawId);
+        EntityId entityId = EntityId
+                .newBuilder()
+                .setId(id)
+                .build();
+        Any packedEntityId = Identifier.pack(entityId);
         FMCustomer expectedState = FMCustomer
                 .newBuilder()
                 .setId(FirebaseMirrorTestEnv.newId())
@@ -62,7 +68,7 @@ class FirebaseSubscriptionPublisherTest {
         Any state = pack(expectedState);
         EntityStateUpdate update = EntityStateUpdate
                 .newBuilder()
-                .setId(id)
+                .setId(packedEntityId)
                 .setState(state)
                 .build();
         publisher.publish(singleton(update));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -76,7 +76,7 @@ import static com.google.common.collect.Sets.newHashSet;
  *         select the desired project and enable Cloud Firestore.
  *     <li>Create an instance of {@link Firestore} and pass it to a
  *         {@code FirebaseSubscriptionMirror}.
- *     <li>{@linkplain #reflect(TypeUrl) Reflect} the selected entity types to Firestore.
+ *     <li>{@linkplain #reflect(TypeUrl) Reflect} the selected event/entity types to Firestore.
  * </ol>
  *
  * <a name="protocol"></a>
@@ -85,15 +85,19 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <h2>Location</h2>
  *
- * <p>The mirror writes the received entity state updates to the given Firestore by the following
- * rules:
+ * <p>The mirror writes the received updates to the given Firestore by the following rules:
  * <ul>
- *     <li>A {@linkplain CollectionReference collection} is created per entity type. The name of
- *         the collection is equal to the Protobuf type URL of the entity state. The underscore
- *         symbol ({@code "_"}) is used instead of slash ({@code "/"}).
- *     <li>The {@linkplain DocumentReference documents} in that collection represent the entity
- *         states. There is at most one document for each {@code Entity} instance.
- *     <li>When the entity is updated, the appropriate document is updated as well.
+ *     <li>A {@linkplain CollectionReference collection} is created per event/entity type. The name
+ *         of the collection is equal to the Protobuf type URL of the event message or entity
+ *         state. The underscore symbol ({@code "_"}) is used instead of slash ({@code "/"}).
+ *     <li>The {@linkplain DocumentReference documents} in that collection represent the received
+ *         events/entity state updates.
+ *     <li>For each observed {@code Entity} instance there is a single document containing the
+ *         entity ID and its latest state.
+ *     <li>For each observed {@code Event}, there is a single document containing event ID, event
+ *         message as well as the timestamp and the producer ID.
+ *     <li>When the entity is updated or event of the observed type is received, the appropriate
+ *         collection is updated as well.
  * </ul>
  *
  * <p><b>Example:</b>
@@ -108,16 +112,21 @@ import static com.google.common.collect.Sets.newHashSet;
  *
  * <h2>Document structure</h2>
  *
- * <p>The Firestore documents created by the mirror have the following structure:
+ * <p>The documents containing observed entity states have the following structure:
  * <ul>
  *     <li>{@code id}: string;
  *     <li>{@code bytes}: BLOB.
  * </ul>
  *
- * <p>The {@code id} field contains the {@linkplain io.spine.base.Identifier#toString(Object)
- * string} representation of the entity ID.
+ * <p>The documents with information about occurred events have the following structure:
+ * <ul>
+ *     <li>{@code id}: string;
+ *     <li>{@code producer_id}: string;
+ *     <li>{@code timestamp}: string;
+ *     <li>{@code bytes}: BLOB.
+ * </ul>
  *
- * <p>The {@code bytes} field contains the serialized entity state.
+ * <p>For details, see {@link EntityUpdatePublisher} and {@link EventPublisher}.
  *
  * <p>If the entity ID is compound (i.e. has one that one field), a custom
  * {@link io.spine.string.Stringifier Stringifier} for the ID type may be useful for simple querying
@@ -268,11 +277,12 @@ public final class FirebaseSubscriptionMirror {
     }
 
     /**
-     * Starts reflecting the updates of entity state of the given {@linkplain TypeUrl type} into
+     * Starts reflecting updates on entities/events of the specified {@linkplain TypeUrl type} into
      * the Cloud Firestore.
      *
-     * <p>After this method invocation, the entity state updates (eventually) start being written to
-     * the underlying {@link Firestore}.
+     * <p>After this method invocation, the underlying {@link Firestore} will start (eventually)
+     * receiving the entity state updates and the events of the observed type which occur in the
+     * system.
      *
      * <p>See <a href="#protocol">class level doc</a> for the description of the storage protocol.
      *
@@ -292,12 +302,13 @@ public final class FirebaseSubscriptionMirror {
     /**
      * Starts reflecting the given {@link Topic} into the Cloud Firestore for the given tenant.
      *
-     * <p>Only the entity state updates of the given tenant will be reflected into Firebase.
+     * <p>Only the entity state updates and events of the given tenant will be reflected into
+     * Firebase.
      *
      * @param topic
      *         the topic to reflect
      * @param tenantId
-     *         the tenant whose entity updates will be reflected
+     *         the tenant whose updates will be reflected
      */
     private void reflect(Topic topic, TenantId tenantId) {
         Topic subscriptionTopic = forTenant(topic, tenantId);
@@ -318,7 +329,7 @@ public final class FirebaseSubscriptionMirror {
     private void doReflect(Topic topic) {
         CollectionReference collectionReference = collection(topic);
         StreamObserver<SubscriptionUpdate> updateObserver =
-                new SubscriptionUpdateObserver(collectionReference);
+                UpdateObserver.create(topic, collectionReference);
         StreamObserver<Subscription> subscriptionObserver =
                 new SubscriptionObserver(subscriptionService, updateObserver);
         subscriptionService.subscribe(topic, subscriptionObserver);
@@ -382,7 +393,7 @@ public final class FirebaseSubscriptionMirror {
 
         private Collection<TenantId> knownTenants;
 
-        // Prevent direct instantiation.
+        /** Prevents direct instantiation. */
         private Builder() {
         }
 
@@ -410,8 +421,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>Either this method or {@link #setReflectionRule(Function)} or
          * {@link #setFirestoreDocument(DocumentReference)} must be called, but only one of them.
          *
-         * <p>In case if this method is called, the generated by the mirror collections will be
-         * located in the Firestore root.
+         * <p>In case this method is called, the generated collections will be located in the
+         * Firestore root.
          *
          * @param database
          *         the {@link Firestore} to use
@@ -429,8 +440,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>Either this method or {@link #setFirestore(Firestore)} or
          * {@link #setReflectionRule(Function)} must be called, but only one of them.
          *
-         * <p>In case if this method is called, the generated by the mirror collections will be
-         * located under the specified document.
+         * <p>In case this method is called, the generated collections will be located under the
+         * specified document.
          *
          * @param document
          *         the {@link DocumentReference} to write the data into
@@ -449,8 +460,8 @@ public final class FirebaseSubscriptionMirror {
          * <p>Either this method or {@link #setFirestore(Firestore)} or
          * {@link #setFirestoreDocument(DocumentReference)} must be called, but only one of them.
          *
-         * <p>In case if this method is called, the generated by the mirror collections will be
-         * distributed amongst the produced by the function documents.
+         * <p>In case this method is called, the generated collections will be distributed amongst
+         * the documents produced by the function .
          *
          * @param reflectionRule
          *         the topic to document function
@@ -468,7 +479,7 @@ public final class FirebaseSubscriptionMirror {
          * <p>At least one {@code BoundedContext} should be specified to build a mirror.
          *
          * @param boundedContext
-         *         the {@link BoundedContext} to reflect entities from
+         *         the {@link BoundedContext} to reflect entities and events from
          * @return self for method chaining
          */
         public Builder addBoundedContext(BoundedContext boundedContext) {

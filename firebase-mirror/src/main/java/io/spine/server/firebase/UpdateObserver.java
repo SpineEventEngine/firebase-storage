@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -22,9 +22,11 @@ package io.spine.server.firebase;
 
 import com.google.cloud.firestore.CollectionReference;
 import io.grpc.stub.StreamObserver;
-import io.spine.client.EntityStateUpdate;
+import io.spine.base.EventMessage;
 import io.spine.client.SubscriptionUpdate;
+import io.spine.client.Topic;
 import io.spine.logging.Logging;
+import io.spine.type.TypeUrl;
 
 import java.util.Collection;
 
@@ -35,26 +37,41 @@ import static java.lang.String.format;
  * An implementation of {@link StreamObserver} publishing the received {@link SubscriptionUpdate}s
  * to the given {@link CollectionReference Cloud Firestore location}.
  *
+ * <p>The descendants decide which part of the {@code SubscriptionUpdate} should be published and
+ * how.
+ *
  * <p>The implementation logs a message upon either
  * {@linkplain StreamObserver#onCompleted() successful} or
  * {@linkplain StreamObserver#onError faulty} stream completion.
  *
- * @see FirestoreSubscriptionPublisher
+ * @param <U>
+ *         the type of the observed update
+ *
+ * @see FirestorePublisher
  */
-final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpdate>, Logging {
+abstract class UpdateObserver<U>
+        implements StreamObserver<SubscriptionUpdate>, Logging {
 
     private final String path;
-    private final FirestoreSubscriptionPublisher publisher;
+    private final FirestorePublisher<U> publisher;
 
-    SubscriptionUpdateObserver(CollectionReference target) {
+    UpdateObserver(CollectionReference target,
+                   FirestorePublisher<U> publisher) {
         checkNotNull(target);
         this.path = target.getPath();
-        this.publisher = new FirestoreSubscriptionPublisher(target);
+        this.publisher = publisher;
+    }
+
+    static UpdateObserver<?> create(Topic topic, CollectionReference target) {
+        if (hasEventAsTarget(topic)) {
+            return new EventObserver(target);
+        }
+        return new EntityUpdateObserver(target);
     }
 
     @Override
     public void onNext(SubscriptionUpdate value) {
-        Collection<EntityStateUpdate> payload = value.getEntityStateUpdatesList();
+        Collection<U> payload = extractUpdatePayload(value);
         publisher.publish(payload);
     }
 
@@ -67,5 +84,19 @@ final class SubscriptionUpdateObserver implements StreamObserver<SubscriptionUpd
     @Override
     public void onCompleted() {
         log().info("Subscription with target `{}` has been completed.", path);
+    }
+
+    /**
+     * Extracts the part which should be published from a {@code SubscriptionUpdate} message.
+     */
+    protected abstract Collection<U> extractUpdatePayload(SubscriptionUpdate value);
+
+    private static boolean hasEventAsTarget(Topic topic) {
+        String typeUrl = topic.getTarget()
+                              .getType();
+        Class<?> targetClass = TypeUrl.parse(typeUrl)
+                                      .getJavaClass();
+        boolean result = EventMessage.class.isAssignableFrom(targetClass);
+        return result;
     }
 }

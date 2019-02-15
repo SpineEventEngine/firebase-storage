@@ -18,7 +18,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * Contains classes for the Firebase Subscription mirror.
- */
 package io.spine.server.firebase;
+
+import com.google.cloud.firestore.CollectionReference;
+import io.spine.client.SubscriptionUpdate;
+import io.spine.core.Event;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * An {@code UpdateObserver} for the event subscriptions.
+ *
+ * <p>Publishes a new event which occurred in the system to the underlying Firestore.
+ *
+ * @see EventPublisher
+ */
+final class EventObserver extends UpdateObserver<Event> {
+
+    EventObserver(CollectionReference target) {
+        super(target, new EventPublisher(target));
+    }
+
+    @Override
+    protected Collection<Event> extractUpdatePayload(SubscriptionUpdate value) {
+        List<Event> result = value.getEventUpdates()
+                                  .getEventsList();
+        return result;
+    }
+}

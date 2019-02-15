@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, TeamDev. All rights reserved.
+ * Copyright 2019, TeamDev. All rights reserved.
  *
  * Redistribution and use in source and/or binary forms, with or without
  * modification, must retain the above copyright notice and the following
@@ -33,29 +33,29 @@ import static io.spine.protobuf.TypeConverter.toAny;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
 
-@DisplayName("SubscriptionUpdateObserver should")
-class SubscriptionUpdateObserverTest {
+@DisplayName("UpdateObserver should")
+class UpdateObserverTest {
 
     @Test
     @DisplayName(NOT_ACCEPT_NULLS)
     void passNullToleranceCheck() throws NoSuchMethodException {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
         new NullPointerTester()
-                .ignore(SubscriptionUpdateObserver.class.getMethod("onError", Throwable.class))
+                .ignore(UpdateObserver.class.getMethod("onError", Throwable.class))
                 .testAllPublicInstanceMethods(observer);
     }
 
     @Test
     @DisplayName("not accept nulls on construction")
     void rejectNullsOnConstruction() {
-        new NullPointerTester().testAllPublicConstructors(SubscriptionUpdateObserver.class);
+        new NullPointerTester().testAllPublicConstructors(UpdateObserver.class);
     }
 
     @Test
     @DisplayName("ignore error")
     void ignoreError() {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
-        String testMessage = SubscriptionUpdateObserverTest.class.getSimpleName();
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
+        String testMessage = UpdateObserverTest.class.getSimpleName();
         EntityAlreadyArchived rejection = EntityAlreadyArchived
                 .newBuilder()
                 .setEntityId(toAny(testMessage))
@@ -69,7 +69,7 @@ class SubscriptionUpdateObserverTest {
     @Test
     @DisplayName("ignore completion")
     void ignoreCompletion() {
-        StreamObserver<?> observer = new SubscriptionUpdateObserver(target());
+        StreamObserver<?> observer = new EntityUpdateObserver(target());
         observer.onCompleted();
         observer.onCompleted();
     }
