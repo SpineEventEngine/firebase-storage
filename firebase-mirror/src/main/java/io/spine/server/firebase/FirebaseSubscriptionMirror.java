@@ -352,7 +352,7 @@ public final class FirebaseSubscriptionMirror {
 
     private static String toKey(Target target) {
         TypeUrl typeUrl = TypeUrl.parse(target.getType());
-        String type = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
+        String type = typeUrl.prefix() + '_' + typeUrl.toTypeName().value();
         return type;
     }
 

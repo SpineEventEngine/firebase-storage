@@ -18,6 +18,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// In `config/gradle/dependencies.gradle` we define a fail-upon-dependency-conflict strategy.
+// `firebaseAdmin` dependency has multiple conflicting versions in their dependency tree,
+//
+// Therefore this block forces the versions specific to `firebaseAdmin` dependency tree.
+//
+// TODO:2019-02-20:alex.tymchenko: https://github.com/SpineEventEngine/firebase-storage/issues/8
+
+final grpcVersion = "1.18.0"
+final googleClientVersion = "1.25.0"
+final googleAuthLibraryVersion = "0.11.0"
+final nettyVersion = "4.1.27.Final"
+
+configurations.all {
+    resolutionStrategy {
+        force(
+                "com.google.code.gson:gson:2.7",
+                "com.google.api:api-common:1.7.0",
+                "com.google.api-client:google-api-client:$googleClientVersion",
+                "com.google.api.grpc:proto-google-common-protos:1.12.0",
+                "com.google.auth:google-auth-library-oauth2-http:$googleAuthLibraryVersion",
+                "com.google.auth:google-auth-library-credentials:$googleAuthLibraryVersion",
+                "com.google.oauth-client:google-oauth-client:$googleClientVersion",
+                "com.google.http-client:google-http-client:$googleClientVersion",
+                "com.google.http-client:google-http-client-jackson2:$googleClientVersion",
+                
+                "io.grpc:grpc-stub:$grpcVersion",
+                "io.grpc:grpc-core:$grpcVersion",
+                "io.grpc:grpc-protobuf:$grpcVersion",
+                "io.grpc:grpc-context:$grpcVersion",
+                "io.grpc:grpc-netty-shaded:$grpcNettyShadedVersion",
+                
+                "io.opencensus:opencensus-api:0.15.0",
+                
+                "io.netty:netty-codec-http:$nettyVersion",
+                "io.netty:netty-handler:$nettyVersion",
+                "io.netty:netty-transport:$nettyVersion",
+                
+                "org.checkerframework:checker-compat-qual:2.5.3",
+        )
+    }
+}
+
 dependencies {
     implementation deps.build.firebaseAdmin
     implementation "io.grpc:grpc-netty-shaded:$grpcNettyShadedVersion"

@@ -19,18 +19,11 @@
  */
 
 
-buildscript {
+buildscript { final scriptHandler ->
     apply from: 'version.gradle'
     apply from: "$rootDir/config/gradle/dependencies.gradle"
 
-    repositories {
-        jcenter()
-        maven { url = repos.gradlePlugins }
-        maven { url = repos.spine }
-        maven { url = repos.spineSnapshots }
-        mavenCentral()
-        mavenLocal()
-    }
+    defaultRepositories(scriptHandler)
 
     dependencies {
         classpath deps.build.guava
@@ -38,6 +31,8 @@ buildscript {
         classpath deps.build.gradlePlugins.protobuf
         classpath "io.spine.tools:spine-model-compiler:$spineBaseVersion"
     }
+
+    forceConfiguration(scriptHandler)
 }
 
 ext {
@@ -85,13 +80,7 @@ subprojects {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
-    repositories {
-        jcenter()
-        maven { url = repos.spine }
-        maven { url = repos.spineSnapshots }
-        mavenCentral()
-        mavenLocal()
-    }
+    defaultRepositories(project)
 
     dependencies {
         errorprone deps.build.errorProneCore
@@ -103,12 +92,20 @@ subprojects {
         implementation deps.build.guava
 
         testImplementation deps.test.hamcrest
-        testImplementation "io.spine:spine-testutil-server:1.0.0-SNAPSHOT"
+        testImplementation "io.spine:spine-testutil-server:$spineVersion"
         testImplementation deps.test.guavaTestlib
         testImplementation deps.test.slf4j
         testImplementation deps.test.junit5Api
         testImplementation deps.test.junit5Runner
     }
+    
+    configurations {
+        // Avoid collisions of Java classes defined both in `protobuf-lite` and `protobuf-java`
+        runtime.exclude group: "com.google.protobuf", module: "protobuf-lite"
+        testRuntime.exclude group: "com.google.protobuf", module: "protobuf-lite"
+    }
+
+    forceConfiguration(project)
 
     test {
         useJUnitPlatform {
@@ -157,17 +154,17 @@ subprojects {
 
     task sourceJar(type: Jar) {
         from sourceSets.main.allJava
-        classifier "sources"
+        archiveClassifier.set("sources")
     }
 
     task testOutputJar(type: Jar) {
         from sourceSets.test.output
-        classifier "test"
+        archiveClassifier.set("test")
     }
 
     task javadocJar(type: Jar, dependsOn: 'javadoc') {
         from ("$projectDir/build/docs/javadoc")
-        classifier "javadoc"
+        archiveClassifier.set("javadoc")
     }
 
     apply from: deps.scripts.pmd

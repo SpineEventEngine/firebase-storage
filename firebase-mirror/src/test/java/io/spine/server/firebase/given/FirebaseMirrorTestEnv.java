@@ -22,6 +22,7 @@ package io.spine.server.firebase.given;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Splitter;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.firebase.FirebaseApp;
@@ -156,11 +157,16 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static Firestore createFirestore(GoogleCredentials credentials) {
-        FirebaseOptions options = new FirebaseOptions
-                .Builder()
-                .setDatabaseUrl(DATABASE_URL)
-                .setCredentials(credentials)
-                .build();
+        FirestoreOptions firestoreOptions =
+                FirestoreOptions.newBuilder()
+                                .setTimestampsInSnapshotsEnabled(true)
+                                .build();
+        FirebaseOptions options =
+                FirebaseOptions.builder()
+                               .setDatabaseUrl(DATABASE_URL)
+                               .setCredentials(credentials)
+                               .setFirestoreOptions(firestoreOptions)
+                               .build();
         FirebaseApp.initializeApp(options);
         Firestore firestore = FirestoreClient.getFirestore();
         return firestore;
