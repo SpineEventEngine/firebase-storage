@@ -494,7 +494,7 @@ class FirebaseSubscriptionMirrorTest {
             throws ExecutionException,
                    InterruptedException {
         TypeUrl typeUrl = TypeUrl.of(msgClass);
-        String collectionName = typeUrl.getPrefix() + '_' + typeUrl.getTypeName();
+        String collectionName = typeUrl.prefix() + '_' + typeUrl.toTypeName().value();
         QuerySnapshot collection = collectionAccess.apply(collectionName)
                                                    .get()
                                                    .get();

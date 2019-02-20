@@ -95,7 +95,7 @@ abstract class UpdateObserver<U>
         String typeUrl = topic.getTarget()
                               .getType();
         Class<?> targetClass = TypeUrl.parse(typeUrl)
-                                      .getJavaClass();
+                                      .toJavaClass();
         boolean result = EventMessage.class.isAssignableFrom(targetClass);
         return result;
     }
