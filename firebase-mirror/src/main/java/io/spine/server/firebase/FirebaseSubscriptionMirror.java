@@ -271,7 +271,7 @@ public final class FirebaseSubscriptionMirror {
     private static void registerEventSubscriber(Iterable<BoundedContext> contexts,
                                                 AbstractEventSubscriber eventSubscriber) {
         for (BoundedContext context : contexts) {
-            IntegrationBus integrationBus = context.getIntegrationBus();
+            IntegrationBus integrationBus = context.integrationBus();
             integrationBus.register(eventSubscriber);
         }
     }
@@ -518,7 +518,7 @@ public final class FirebaseSubscriptionMirror {
         private static Collection<TenantId> getAllTenants(Iterable<BoundedContext> contexts) {
             Collection<TenantId> tenants = newLinkedList();
             for (BoundedContext context : contexts) {
-                TenantIndex tenantIndex = context.getTenantIndex();
+                TenantIndex tenantIndex = context.tenantIndex();
                 tenants.addAll(tenantIndex.getAll());
             }
             ImmutableSet<TenantId> result = ImmutableSet.copyOf(tenants);
