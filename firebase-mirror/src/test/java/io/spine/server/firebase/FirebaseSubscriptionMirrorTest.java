@@ -51,6 +51,7 @@ import io.spine.server.storage.StorageField;
 import io.spine.server.tenant.TenantAdded;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
+import io.spine.testing.client.TestActorRequestFactory;
 import io.spine.testing.server.TestEventFactory;
 import io.spine.type.TypeUrl;
 import org.junit.jupiter.api.AfterAll;
@@ -76,7 +77,6 @@ import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.getFirestore;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.newId;
 import static io.spine.server.firebase.given.FirebaseMirrorTestEnv.postCustomerNameChanged;
 import static io.spine.testing.DisplayNames.NOT_ACCEPT_NULLS;
-import static io.spine.testing.client.TestActorRequestFactory.newInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -119,7 +119,7 @@ class FirebaseSubscriptionMirrorTest {
             TypeUrl.of(FMCustomerNameChanged.class);
 
     private final ActorRequestFactory requestFactory =
-            newInstance(FirebaseSubscriptionMirrorTest.class);
+            new TestActorRequestFactory(FirebaseSubscriptionMirrorTest.class);
     private FirebaseSubscriptionMirror mirror;
     private BoundedContext boundedContext;
     private SubscriptionService subscriptionService;
@@ -286,7 +286,7 @@ class FirebaseSubscriptionMirrorTest {
                 .newBuilder()
                 .setEmail(tenantEmail)
                 .build();
-        boundedContext.getTenantIndex()
+        boundedContext.tenantIndex()
                       .keep(firstTenant);
         mirror.reflect(CUSTOMER_TYPE);
         FMCustomerId customerId = newId();
@@ -345,7 +345,7 @@ class FirebaseSubscriptionMirrorTest {
     void reflectForNewTenants() throws ExecutionException, InterruptedException {
         initializeEnvironment(true);
         mirror.reflect(CUSTOMER_TYPE);
-        assertTrue(boundedContext.getTenantIndex()
+        assertTrue(boundedContext.tenantIndex()
                                  .getAll()
                                  .isEmpty());
         TenantId newTenant = TenantId
@@ -368,7 +368,7 @@ class FirebaseSubscriptionMirrorTest {
         ActorContext actorContext = event.getContext()
                                          .getCommandContext()
                                          .getActorContext();
-        BoundedContextName contextName = boundedContext.getName();
+        BoundedContextName contextName = boundedContext.name();
         Any id = pack(event.getId());
         ExternalMessage externalMessage = ExternalMessage
                 .newBuilder()
@@ -377,7 +377,7 @@ class FirebaseSubscriptionMirrorTest {
                 .setOriginalMessage(pack(event))
                 .setActorContext(actorContext)
                 .build();
-        boundedContext.getIntegrationBus()
+        boundedContext.integrationBus()
                       .post(externalMessage, noOpObserver());
     }
 

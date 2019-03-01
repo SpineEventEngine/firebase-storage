@@ -38,7 +38,6 @@ import io.spine.client.ActorRequestFactory;
 import io.spine.client.CommandFactory;
 import io.spine.core.BoundedContextName;
 import io.spine.core.Command;
-import io.spine.core.CommandEnvelope;
 import io.spine.core.Event;
 import io.spine.core.EventContext;
 import io.spine.core.EventId;
@@ -71,6 +70,7 @@ import io.spine.server.projection.ProjectionRepository;
 import io.spine.server.stand.Stand;
 import io.spine.server.storage.StorageFactory;
 import io.spine.server.tenant.TenantAwareOperation;
+import io.spine.server.type.CommandEnvelope;
 import io.spine.string.Stringifier;
 import io.spine.string.StringifierRegistry;
 import io.spine.testing.server.TestEventFactory;
@@ -220,7 +220,7 @@ public final class FirebaseMirrorTestEnv {
         TestEventFactory factoryWithProducer =
                 TestEventFactory.newInstance(customerId, FirebaseMirrorTestEnv.class);
         Event event = factoryWithProducer.createEvent(eventMsg);
-        EventBus eventBus = boundedContext.getEventBus();
+        EventBus eventBus = boundedContext.eventBus();
         eventBus.post(event);
         return event.getId();
     }
@@ -236,7 +236,7 @@ public final class FirebaseMirrorTestEnv {
         FMCustomerCreated eventMsg = createdEvent(sessionId.getCustomerId());
         Event event = eventFactory.createEvent(eventMsg);
         dispatch(projection, event);
-        Stand stand = boundedContext.getStand();
+        Stand stand = boundedContext.stand();
         TenantAwareOperation op = new TenantAwareOperation(defaultTenant()) {
             @Override
             public void run() {
@@ -264,7 +264,7 @@ public final class FirebaseMirrorTestEnv {
         FMChangeCustomerName updateCmd = updateCommand(customerId);
         dispatchCommand(aggregate, createCmd, commandFactory);
         dispatchCommand(aggregate, updateCmd, commandFactory);
-        Stand stand = boundedContext.getStand();
+        Stand stand = boundedContext.stand();
         TenantId tenantId = requestFactory.getTenantId();
         TenantId realTenantId = tenantId == null ? defaultTenant() : tenantId;
         TenantAwareOperation op = new TenantAwareOperation(realTenantId) {
@@ -274,7 +274,7 @@ public final class FirebaseMirrorTestEnv {
             }
         };
         op.execute();
-        return aggregate.getState();
+        return aggregate.state();
     }
 
     private static void dispatchCommand(Aggregate<?, ?, ?> aggregate,
