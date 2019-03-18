@@ -257,9 +257,9 @@ class FirebaseSubscriptionMirrorTest {
                                                        inRoot());
         String actualId = document.getString(EntityStateField.id.toString());
         Stringifier<FMSessionId> stringifier =
-                StringifierRegistry.getInstance()
-                                   .<FMSessionId>get(FMSessionId.class)
-                                   .orElse(null);
+                StringifierRegistry.instance()
+                        .<FMSessionId>get(FMSessionId.class)
+                        .orElse(null);
         assertNotNull(stringifier);
         FMSessionId readId = stringifier.reverse()
                                         .convert(actualId);
@@ -445,7 +445,7 @@ class FirebaseSubscriptionMirrorTest {
                       Message eventId,
                       Function<String, CollectionReference> collectionAccess)
             throws ExecutionException, InterruptedException {
-       return findDocument(eventClass, EventField.id, eventId, collectionAccess);
+        return findDocument(eventClass, EventField.id, eventId, collectionAccess);
     }
 
     /**
@@ -494,7 +494,8 @@ class FirebaseSubscriptionMirrorTest {
             throws ExecutionException,
                    InterruptedException {
         TypeUrl typeUrl = TypeUrl.of(msgClass);
-        String collectionName = typeUrl.prefix() + '_' + typeUrl.toTypeName().value();
+        String collectionName = typeUrl.prefix() + '_' + typeUrl.toTypeName()
+                                                                .value();
         QuerySnapshot collection = collectionAccess.apply(collectionName)
                                                    .get()
                                                    .get();
