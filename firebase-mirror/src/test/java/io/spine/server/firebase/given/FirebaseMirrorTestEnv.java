@@ -128,7 +128,7 @@ public final class FirebaseMirrorTestEnv {
     public static FMSessionId newSessionId() {
         return FMSessionId.newBuilder()
                           .setCustomerId(newId())
-                          .setStartTime(Time.getCurrentTime())
+                          .setStartTime(Time.currentTime())
                           .build();
     }
 
@@ -207,7 +207,7 @@ public final class FirebaseMirrorTestEnv {
                 return result;
             }
         };
-        StringifierRegistry.getInstance()
+        StringifierRegistry.instance()
                            .register(stringifier, FMSessionId.class);
     }
 
@@ -265,7 +265,7 @@ public final class FirebaseMirrorTestEnv {
         dispatchCommand(aggregate, createCmd, commandFactory);
         dispatchCommand(aggregate, updateCmd, commandFactory);
         Stand stand = boundedContext.stand();
-        TenantId tenantId = requestFactory.getTenantId();
+        TenantId tenantId = requestFactory.tenantId();
         TenantId realTenantId = tenantId == null ? defaultTenant() : tenantId;
         TenantAwareOperation op = new TenantAwareOperation(realTenantId) {
             @Override
@@ -371,12 +371,12 @@ public final class FirebaseMirrorTestEnv {
 
         @Apply
         private void on(FMCustomerCreated event) {
-            getBuilder().setId(event.getId());
+            builder().setId(event.getId());
         }
 
         @Apply
         private void on(FMCustomerNameChanged event) {
-            getBuilder().setName(event.getNewName());
+            builder().setName(event.getNewName());
         }
     }
 
@@ -398,11 +398,11 @@ public final class FirebaseMirrorTestEnv {
 
         @Subscribe
         void on(FMCustomerCreated event, EventContext context) {
-            getBuilder().setDuration(mockLogic(context));
+            builder().setDuration(mockLogic(context));
         }
 
         private static Duration mockLogic(EventContext context) {
-            Timestamp currentTime = Time.getCurrentTime();
+            Timestamp currentTime = Time.currentTime();
             Timestamp eventTime = context.getTimestamp();
             long durationSeconds = eventTime.getSeconds() - currentTime.getSeconds();
             Duration duration = Duration
