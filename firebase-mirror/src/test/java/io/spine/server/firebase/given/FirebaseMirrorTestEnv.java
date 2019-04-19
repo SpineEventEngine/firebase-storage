@@ -45,6 +45,7 @@ import io.spine.core.TenantId;
 import io.spine.core.UserId;
 import io.spine.logging.Logging;
 import io.spine.people.PersonName;
+import io.spine.people.PersonNameVBuilder;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
 import io.spine.server.aggregate.AggregateRepository;
@@ -105,7 +106,7 @@ public final class FirebaseMirrorTestEnv {
     private static final String DATABASE_URL = "https://spine-firestore-test.firebaseio.com";
 
     private static final UserId TEST_ACTOR = UserId
-            .newBuilder()
+            .vBuilder()
             .setValue("Firebase mirror test")
             .build();
     private static final ActorRequestFactory defaultRequestFactory = newInstance(TEST_ACTOR);
@@ -120,16 +121,18 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static FMCustomerId newId() {
-        return FMCustomerId.newBuilder()
-                           .setUid(newUuid())
-                           .build();
+        return FMCustomerId
+                .vBuilder()
+                .setUid(newUuid())
+                .build();
     }
 
     public static FMSessionId newSessionId() {
-        return FMSessionId.newBuilder()
-                          .setCustomerId(newId())
-                          .setStartTime(currentTime())
-                          .build();
+        return FMSessionId
+                .vBuilder()
+                .setCustomerId(newId())
+                .setStartTime(currentTime())
+                .build();
     }
 
     public static Firestore getFirestore() {
@@ -157,16 +160,16 @@ public final class FirebaseMirrorTestEnv {
     }
 
     private static Firestore createFirestore(GoogleCredentials credentials) {
-        FirestoreOptions firestoreOptions =
-                FirestoreOptions.newBuilder()
-                                .setTimestampsInSnapshotsEnabled(true)
-                                .build();
-        FirebaseOptions options =
-                FirebaseOptions.builder()
-                               .setDatabaseUrl(DATABASE_URL)
-                               .setCredentials(credentials)
-                               .setFirestoreOptions(firestoreOptions)
-                               .build();
+        FirestoreOptions firestoreOptions = FirestoreOptions
+                .newBuilder()
+                .setTimestampsInSnapshotsEnabled(true)
+                .build();
+        FirebaseOptions options = FirebaseOptions
+                .builder()
+                .setDatabaseUrl(DATABASE_URL)
+                .setCredentials(credentials)
+                .setFirestoreOptions(firestoreOptions)
+                .build();
         FirebaseApp.initializeApp(options);
         Firestore firestore = FirestoreClient.getFirestore();
         return firestore;
@@ -190,7 +193,7 @@ public final class FirebaseMirrorTestEnv {
                                              .splitToList(stringId);
                 checkArgument(parts.size() == 2);
                 FMCustomerId customerId = FMCustomerId
-                        .newBuilder()
+                        .vBuilder()
                         .setUid(parts.get(0))
                         .build();
                 Timestamp timestamp;
@@ -200,7 +203,7 @@ public final class FirebaseMirrorTestEnv {
                     throw new IllegalArgumentException(e);
                 }
                 FMSessionId result = FMSessionId
-                        .newBuilder()
+                        .vBuilder()
                         .setCustomerId(customerId)
                         .setStartTime(timestamp)
                         .build();
@@ -214,7 +217,7 @@ public final class FirebaseMirrorTestEnv {
     public static EventId postCustomerNameChanged(FMCustomerId customerId,
                                                   BoundedContext boundedContext) {
         FMCustomerNameChanged eventMsg = FMCustomerNameChanged
-                .newBuilder()
+                .vBuilder()
                 .setId(customerId)
                 .build();
         TestEventFactory factoryWithProducer =
@@ -301,20 +304,20 @@ public final class FirebaseMirrorTestEnv {
 
     private static FMCreateCustomer createCommand(FMCustomerId id) {
         FMCreateCustomer createCmd = FMCreateCustomer
-                .newBuilder()
+                .vBuilder()
                 .setId(id)
                 .build();
         return createCmd;
     }
 
     private static FMChangeCustomerName updateCommand(FMCustomerId id) {
-        PersonName newName = PersonName
+        PersonName newName = PersonNameVBuilder
                 .newBuilder()
                 .setGivenName("John")
                 .setFamilyName("Doe")
                 .build();
         FMChangeCustomerName updateCmd = FMChangeCustomerName
-                .newBuilder()
+                .vBuilder()
                 .setId(id)
                 .setNewName(newName)
                 .build();
@@ -323,16 +326,17 @@ public final class FirebaseMirrorTestEnv {
 
     private static FMCustomerCreated createdEvent(FMCustomerId id) {
         FMCustomerCreated createCmd = FMCustomerCreated
-                .newBuilder()
+                .vBuilder()
                 .setId(id)
                 .build();
         return createCmd;
     }
 
     private static TenantId defaultTenant() {
-        return TenantId.newBuilder()
-                       .setValue("Default tenant")
-                       .build();
+        return TenantId
+                .vBuilder()
+                .setValue("Default tenant")
+                .build();
     }
 
     public static BoundedContext createBoundedContext(String name, boolean multitenant) {
@@ -364,9 +368,10 @@ public final class FirebaseMirrorTestEnv {
 
         @Assign
         FMCustomerNameChanged handle(FMChangeCustomerName command) {
-            return FMCustomerNameChanged.newBuilder()
-                                        .setNewName(command.getNewName())
-                                        .build();
+            return FMCustomerNameChanged
+                    .vBuilder()
+                    .setNewName(command.getNewName())
+                    .build();
         }
 
         @Apply

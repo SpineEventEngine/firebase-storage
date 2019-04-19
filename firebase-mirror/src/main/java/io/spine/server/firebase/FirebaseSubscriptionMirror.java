@@ -193,7 +193,7 @@ public final class FirebaseSubscriptionMirror {
 
     private static final String ACTOR_ID = FirebaseSubscriptionMirror.class.getSimpleName();
     private static final UserId ACTOR = UserId
-            .newBuilder()
+            .vBuilder()
             .setValue(ACTOR_ID)
             .build();
     private static final ActorRequestFactory requestFactory = ActorRequestFactory

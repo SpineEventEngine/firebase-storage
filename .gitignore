@@ -39,3 +39,6 @@ build
 
 # Spine temp files
 .spine
+
+# GCloud Firebase Service Account
+serviceAccount.json
