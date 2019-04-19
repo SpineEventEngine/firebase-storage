@@ -352,16 +352,17 @@ public final class FirebaseSubscriptionMirror {
 
     private static String toKey(Target target) {
         TypeUrl typeUrl = TypeUrl.parse(target.getType());
-        String type = typeUrl.prefix() + '_' + typeUrl.toTypeName().value();
+        String type = typeUrl.prefix() + '_' + typeUrl.toTypeName()
+                                                      .value();
         return type;
     }
 
     private static Topic forTenant(Topic topic, TenantId tenant) {
         ActorContext context = topic.getContext()
-                                    .toBuilder()
+                                    .toVBuilder()
                                     .setTenantId(tenant)
                                     .build();
-        Topic result = topic.toBuilder()
+        Topic result = topic.toVBuilder()
                             .setContext(context)
                             .build();
         return result;
