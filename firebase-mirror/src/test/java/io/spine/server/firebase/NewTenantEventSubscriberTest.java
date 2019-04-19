@@ -48,21 +48,23 @@ class NewTenantEventSubscriberTest {
         subscriber.on(event1);
         subscriber.on(event2);
 
-        assertEquals(1, callback.getTenants().size());
+        assertEquals(1, callback.getTenants()
+                                .size());
     }
 
     private static TenantAdded event(TenantId tenantId) {
         TenantAdded event = TenantAdded
-                .newBuilder()
+                .vBuilder()
                 .setId(tenantId)
                 .build();
         return event;
     }
 
     private static TenantId newId() {
-        return TenantId.newBuilder()
-                       .setValue(NewTenantEventSubscriberTest.class.getName())
-                       .build();
+        return TenantId
+                .vBuilder()
+                .setValue(NewTenantEventSubscriberTest.class.getName())
+                .build();
     }
 
     private static final class MemoizingTenantCallback implements TenantCallback {

@@ -40,7 +40,9 @@ import io.spine.core.Event;
 import io.spine.core.EventId;
 import io.spine.core.TenantId;
 import io.spine.net.EmailAddress;
+import io.spine.net.EmailAddressVBuilder;
 import io.spine.net.InternetDomain;
+import io.spine.net.InternetDomainVBuilder;
 import io.spine.server.BoundedContext;
 import io.spine.server.SubscriptionService;
 import io.spine.server.firebase.EntityUpdatePublisher.EntityStateField;
@@ -270,20 +272,20 @@ class FirebaseSubscriptionMirrorTest {
     @DisplayName("partition records of different tenants")
     void partitionRecords() throws ExecutionException, InterruptedException {
         initializeEnvironment(true);
-        InternetDomain tenantDomain = InternetDomain
+        InternetDomain tenantDomain = InternetDomainVBuilder
                 .newBuilder()
                 .setValue("example.org")
                 .build();
-        EmailAddress tenantEmail = EmailAddress
+        EmailAddress tenantEmail = EmailAddressVBuilder
                 .newBuilder()
                 .setValue("user@example.org")
                 .build();
         TenantId firstTenant = TenantId
-                .newBuilder()
+                .vBuilder()
                 .setDomain(tenantDomain)
                 .build();
         TenantId secondTenant = TenantId
-                .newBuilder()
+                .vBuilder()
                 .setEmail(tenantEmail)
                 .build();
         boundedContext.tenantIndex()
@@ -349,7 +351,7 @@ class FirebaseSubscriptionMirrorTest {
                                  .getAll()
                                  .isEmpty());
         TenantId newTenant = TenantId
-                .newBuilder()
+                .vBuilder()
                 .setValue(newUuid())
                 .build();
         addTenant(newTenant);
@@ -361,7 +363,7 @@ class FirebaseSubscriptionMirrorTest {
 
     private void addTenant(TenantId tenantId) {
         TenantAdded eventMsg = TenantAdded
-                .newBuilder()
+                .vBuilder()
                 .setId(tenantId)
                 .build();
         Event event = eventFactory.createEvent(eventMsg);
@@ -371,7 +373,7 @@ class FirebaseSubscriptionMirrorTest {
         BoundedContextName contextName = boundedContext.name();
         Any id = pack(event.getId());
         ExternalMessage externalMessage = ExternalMessage
-                .newBuilder()
+                .vBuilder()
                 .setBoundedContextName(contextName)
                 .setId(id)
                 .setOriginalMessage(pack(event))

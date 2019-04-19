@@ -57,17 +57,17 @@ class FirebasePublisherTest {
         String expectedId = "id001_foobar";
         Any id = Identifier.pack(rawId);
         EntityId entityId = EntityId
-                .newBuilder()
+                .vBuilder()
                 .setId(id)
                 .build();
         Any packedEntityId = Identifier.pack(entityId);
         FMCustomer expectedState = FMCustomer
-                .newBuilder()
+                .vBuilder()
                 .setId(FirebaseMirrorTestEnv.newId())
                 .build();
         Any state = pack(expectedState);
         EntityStateUpdate update = EntityStateUpdate
-                .newBuilder()
+                .vBuilder()
                 .setId(packedEntityId)
                 .setState(state)
                 .build();

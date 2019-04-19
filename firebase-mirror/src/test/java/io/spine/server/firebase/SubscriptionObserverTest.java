@@ -26,6 +26,8 @@ import io.spine.base.Identifier;
 import io.spine.client.Subscription;
 import io.spine.client.SubscriptionId;
 import io.spine.client.SubscriptionUpdate;
+import io.spine.client.Topic;
+import io.spine.client.TopicVBuilder;
 import io.spine.server.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -103,9 +105,10 @@ class SubscriptionObserverTest {
     }
 
     private static SubscriptionId newSubscriptionId() {
-        return SubscriptionId.newBuilder()
-                             .setValue(Identifier.newUuid())
-                             .build();
+        return SubscriptionId
+                .vBuilder()
+                .setValue(Identifier.newUuid())
+                .build();
     }
 
     /**
@@ -115,6 +118,7 @@ class SubscriptionObserverTest {
      * method. The tests makes sure that the exact type of throwable is thrown.
      */
     private static final class CustomThrowable extends Throwable {
+
         private static final long serialVersionUID = 0L;
     }
 }
