@@ -33,7 +33,7 @@ final nettyVersion = "4.1.32.Final"
 configurations.all {
     resolutionStrategy {
         force(
-                "com.google.code.gson:gson:2.7",
+                "com.google.code.gson:gson:2.8.5",
                 "com.google.api:api-common:1.7.0",
                 "com.google.api-client:google-api-client:$googleClientVersion",
                 "com.google.api.grpc:proto-google-common-protos:1.12.0",
