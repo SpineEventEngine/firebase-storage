@@ -34,7 +34,7 @@ configurations.all {
     resolutionStrategy {
         force(
                 "com.google.code.gson:gson:2.7",
-                "com.google.api:api-common:1.7.0",
+                "com.google.api:api-common:1.8.1",
                 "com.google.api-client:google-api-client:$googleClientVersion",
                 "com.google.api.grpc:proto-google-common-protos:1.12.0",
                 "com.google.auth:google-auth-library-oauth2-http:$googleAuthLibraryVersion",
