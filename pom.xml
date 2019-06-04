@@ -10,7 +10,8 @@ all modules and does not describe the project structure per-subproject.
  
  -->
 
-<artifactId>firebase-storage</artifactId>
+<groupId>io.spine</groupId>
+<artifactId>spine-firebase-storage</artifactId>
 <version>1.0.0-SNAPSHOT</version>
 
 <inceptionYear>2015</inceptionYear>
