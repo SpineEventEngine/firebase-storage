@@ -55,6 +55,8 @@ configurations.all {
                 "io.netty:netty-codec-http:$nettyVersion",
                 "io.netty:netty-handler:$nettyVersion",
                 "io.netty:netty-transport:$nettyVersion",
+                "io.netty:netty-buffer:$nettyVersion",
+                "io.netty:netty-common:$nettyVersion",
 
                 "org.checkerframework:checker-compat-qual:2.5.3",
         )
