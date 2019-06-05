@@ -43,6 +43,7 @@ message FMSessionId {
 }
 
 message FMSession {
+    option (entity).visibility = FULL;
 
     FMSessionId id = 1;
 

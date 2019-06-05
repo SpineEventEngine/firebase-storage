@@ -37,6 +37,7 @@ message FMCustomerId {
 }
 
 message FMCustomer {
+    option (entity).visibility = FULL;
 
     FMCustomerId id = 1;
 
