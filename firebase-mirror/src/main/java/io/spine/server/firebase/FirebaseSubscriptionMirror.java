@@ -193,9 +193,9 @@ public final class FirebaseSubscriptionMirror {
 
     private static final String ACTOR_ID = FirebaseSubscriptionMirror.class.getSimpleName();
     private static final UserId ACTOR = UserId
-            .vBuilder()
+            .newBuilder()
             .setValue(ACTOR_ID)
-            .build();
+            .vBuild();
     private static final ActorRequestFactory requestFactory = ActorRequestFactory
             .newBuilder()
             .setActor(ACTOR)
@@ -359,12 +359,12 @@ public final class FirebaseSubscriptionMirror {
 
     private static Topic forTenant(Topic topic, TenantId tenant) {
         ActorContext context = topic.getContext()
-                                    .toVBuilder()
+                                    .toBuilder()
                                     .setTenantId(tenant)
-                                    .build();
-        Topic result = topic.toVBuilder()
+                                    .vBuild();
+        Topic result = topic.toBuilder()
                             .setContext(context)
-                            .build();
+                            .vBuild();
         return result;
     }
 

@@ -45,7 +45,6 @@ import io.spine.core.TenantId;
 import io.spine.core.UserId;
 import io.spine.logging.Logging;
 import io.spine.people.PersonName;
-import io.spine.people.PersonNameVBuilder;
 import io.spine.server.BoundedContext;
 import io.spine.server.aggregate.Aggregate;
 import io.spine.server.aggregate.AggregateRepository;
@@ -106,9 +105,9 @@ public final class FirebaseMirrorTestEnv {
     private static final String DATABASE_URL = "https://spine-firestore-test.firebaseio.com";
 
     private static final UserId TEST_ACTOR = UserId
-            .vBuilder()
+            .newBuilder()
             .setValue("Firebase mirror test")
-            .build();
+            .vBuild();
     private static final ActorRequestFactory defaultRequestFactory = newInstance(TEST_ACTOR);
     private static final TestEventFactory eventFactory =
             TestEventFactory.newInstance(FirebaseMirrorTestEnv.class);
@@ -122,17 +121,17 @@ public final class FirebaseMirrorTestEnv {
 
     public static FMCustomerId newId() {
         return FMCustomerId
-                .vBuilder()
+                .newBuilder()
                 .setUid(newUuid())
-                .build();
+                .vBuild();
     }
 
     public static FMSessionId newSessionId() {
         return FMSessionId
-                .vBuilder()
+                .newBuilder()
                 .setCustomerId(newId())
                 .setStartTime(currentTime())
-                .build();
+                .vBuild();
     }
 
     public static Firestore getFirestore() {
@@ -193,9 +192,9 @@ public final class FirebaseMirrorTestEnv {
                                              .splitToList(stringId);
                 checkArgument(parts.size() == 2);
                 FMCustomerId customerId = FMCustomerId
-                        .vBuilder()
+                        .newBuilder()
                         .setUid(parts.get(0))
-                        .build();
+                        .vBuild();
                 Timestamp timestamp;
                 try {
                     timestamp = Timestamps.parse(parts.get(1));
@@ -203,10 +202,10 @@ public final class FirebaseMirrorTestEnv {
                     throw new IllegalArgumentException(e);
                 }
                 FMSessionId result = FMSessionId
-                        .vBuilder()
+                        .newBuilder()
                         .setCustomerId(customerId)
                         .setStartTime(timestamp)
-                        .build();
+                        .vBuild();
                 return result;
             }
         };
@@ -217,9 +216,9 @@ public final class FirebaseMirrorTestEnv {
     public static EventId postCustomerNameChanged(FMCustomerId customerId,
                                                   BoundedContext boundedContext) {
         FMCustomerNameChanged eventMsg = FMCustomerNameChanged
-                .vBuilder()
+                .newBuilder()
                 .setId(customerId)
-                .build();
+                .vBuild();
         TestEventFactory factoryWithProducer =
                 TestEventFactory.newInstance(customerId, FirebaseMirrorTestEnv.class);
         Event event = factoryWithProducer.createEvent(eventMsg);
@@ -304,39 +303,39 @@ public final class FirebaseMirrorTestEnv {
 
     private static FMCreateCustomer createCommand(FMCustomerId id) {
         FMCreateCustomer createCmd = FMCreateCustomer
-                .vBuilder()
+                .newBuilder()
                 .setId(id)
-                .build();
+                .vBuild();
         return createCmd;
     }
 
     private static FMChangeCustomerName updateCommand(FMCustomerId id) {
-        PersonName newName = PersonNameVBuilder
+        PersonName newName = PersonName
                 .newBuilder()
                 .setGivenName("John")
                 .setFamilyName("Doe")
-                .build();
+                .vBuild();
         FMChangeCustomerName updateCmd = FMChangeCustomerName
-                .vBuilder()
+                .newBuilder()
                 .setId(id)
                 .setNewName(newName)
-                .build();
+                .vBuild();
         return updateCmd;
     }
 
     private static FMCustomerCreated createdEvent(FMCustomerId id) {
         FMCustomerCreated createCmd = FMCustomerCreated
-                .vBuilder()
+                .newBuilder()
                 .setId(id)
-                .build();
+                .vBuild();
         return createCmd;
     }
 
     private static TenantId defaultTenant() {
         return TenantId
-                .vBuilder()
+                .newBuilder()
                 .setValue("Default tenant")
-                .build();
+                .vBuild();
     }
 
     public static BoundedContext createBoundedContext(String name, boolean multitenant) {
@@ -355,7 +354,7 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static class CustomerAggregate
-            extends Aggregate<FMCustomerId, FMCustomer, FMCustomerVBuilder> {
+            extends Aggregate<FMCustomerId, FMCustomer, FMCustomer.Builder> {
 
         protected CustomerAggregate(FMCustomerId id) {
             super(id);
@@ -369,9 +368,9 @@ public final class FirebaseMirrorTestEnv {
         @Assign
         FMCustomerNameChanged handle(FMChangeCustomerName command) {
             return FMCustomerNameChanged
-                    .vBuilder()
+                    .newBuilder()
                     .setNewName(command.getNewName())
-                    .build();
+                    .vBuild();
         }
 
         @Apply
@@ -395,7 +394,7 @@ public final class FirebaseMirrorTestEnv {
     }
 
     public static class SessionProjection
-            extends Projection<FMSessionId, FMSession, FMSessionVBuilder> {
+            extends Projection<FMSessionId, FMSession, FMSession.Builder> {
 
         protected SessionProjection(FMSessionId id) {
             super(id);

@@ -54,17 +54,17 @@ class NewTenantEventSubscriberTest {
 
     private static TenantAdded event(TenantId tenantId) {
         TenantAdded event = TenantAdded
-                .vBuilder()
+                .newBuilder()
                 .setId(tenantId)
-                .build();
+                .vBuild();
         return event;
     }
 
     private static TenantId newId() {
         return TenantId
-                .vBuilder()
+                .newBuilder()
                 .setValue(NewTenantEventSubscriberTest.class.getName())
-                .build();
+                .vBuild();
     }
 
     private static final class MemoizingTenantCallback implements TenantCallback {

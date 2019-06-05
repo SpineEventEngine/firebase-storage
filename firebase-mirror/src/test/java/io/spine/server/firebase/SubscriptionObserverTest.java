@@ -27,7 +27,6 @@ import io.spine.client.Subscription;
 import io.spine.client.SubscriptionId;
 import io.spine.client.SubscriptionUpdate;
 import io.spine.client.Topic;
-import io.spine.client.TopicVBuilder;
 import io.spine.server.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -106,9 +105,9 @@ class SubscriptionObserverTest {
 
     private static SubscriptionId newSubscriptionId() {
         return SubscriptionId
-                .vBuilder()
+                .newBuilder()
                 .setValue(Identifier.newUuid())
-                .build();
+                .vBuild();
     }
 
     /**
