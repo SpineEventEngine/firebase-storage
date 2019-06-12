@@ -366,7 +366,7 @@ class FirebaseSubscriptionMirrorTest {
                 .vBuild();
         Event event = eventFactory.createEvent(eventMsg);
         ActorContext actorContext = event.getContext()
-                                         .getCommandContext()
+                                         .getPastMessage()
                                          .getActorContext();
         BoundedContextName contextName = boundedContext.name();
         Any id = pack(event.getId());
