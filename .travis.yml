@@ -1,5 +1,8 @@
 language: java
 
+jdk:
+  - openjdk8
+
 before_install:
   - chmod +x gradlew
   # Decrypt the archive with all the confidential info (e.g. credentials).
