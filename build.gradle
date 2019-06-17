@@ -75,6 +75,7 @@ subprojects {
     apply plugin: 'net.ltgt.errorprone'
     apply plugin: 'io.spine.tools.spine-model-compiler'
     apply from: deps.scripts.modelCompiler
+    apply from: deps.scripts.projectLicenseReport
 
     apply from: deps.scripts.javacArgs
 
@@ -173,4 +174,5 @@ subprojects {
 
 apply from: deps.scripts.publish
 apply from: deps.scripts.jacoco
+apply from: deps.scripts.repoLicenseReport
 apply from: deps.scripts.generatePom
