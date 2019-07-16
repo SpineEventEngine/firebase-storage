@@ -36,6 +36,7 @@ build
 .idea/libraries
 .idea/shelf
 .idea/*.xml
+.idea/.name
 
 # Spine temp files
 .spine
